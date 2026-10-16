@@ -31,8 +31,6 @@
     "@deepseek-ai/cordis-plugin-include": "1.0.10-alpha.2",
     "@deepseek-ai/cordis-plugin-loader": "1.0.6-alpha.2",
     "@deepseek-ai/cordis-plugin-timer": "1.1.7-alpha.2",
-    "@deepseek-ai/cosmokit": "1.8.6-alpha.2",
-    "@deepseek-ai/dsh": "0.2.1-alpha.5",
     "@deepseek-ai/dsh-acp": "0.2.1-alpha.5",
     "@deepseek-ai/dsh-acp-app": "0.2.1-alpha.5",
     "@deepseek-ai/dsh-agent": "0.2.1-alpha.5",
@@ -365,16 +363,8 @@
     "@deepseek-ai/dsh-workspace": "0.2.1-alpha.5",
     "@deepseek-ai/dsh-workspace-changes": "0.2.1-alpha.5",
     "@deepseek-ai/libreoffice-kit": "0.1.5",
-    "@deepseek-ai/libreoffice-kit-darwin-arm64": "0.1.5",
-    "@deepseek-ai/libreoffice-kit-darwin-x64": "0.1.5",
     "@deepseek-ai/libreoffice-kit-wasm": "0.1.5",
-    "@deepseek-ai/libreoffice-kit-win32-arm64": "0.1.5",
-    "@deepseek-ai/libreoffice-kit-win32-x64": "0.1.5",
     "@deepseek-ai/node-addon-system": "0.1.2",
-    "@deepseek-ai/node-addon-system-darwin-arm64": "0.1.2",
-    "@deepseek-ai/node-addon-system-darwin-x64": "0.1.2",
-    "@deepseek-ai/node-addon-system-linux-arm64": "0.1.2",
-    "@deepseek-ai/node-addon-system-linux-x64": "0.1.2",
     "@deepseek-ai/schemastery": "3.18.5-alpha.2",
     "commander": "15.0.0",
     "got": "14.6.6",
@@ -999,6 +989,45 @@
         "why": "alpha.5 里这个子系统整个不存在，三条独立信号：① npm registry 上该包最新只到 0.2.0-rc.2，没有 0.2.1-alpha.5；② 不在 alpha.5 的解析图里（而同为 rc.2 独有的另外 9 个包都已重发到 0.2.1-alpha.5）；③ alpha.5 的引擎树里没有任何包注册 `invariants` 服务（rc.2 里它是唯一提供者、38 个包 inject 它），   客户端适配层那边的 `src/invariant.ts` 也一并删掉了。⇒ 保留登记会让 check-engine-overlay.mjs 判红（登记的包必须物理在场），而它物理上不可能在场。",
         "reviewedAt": "2026-10-17",
         "reviewedBy": "PC side"
+      }
+    ],
+    "contrastFlaws": [
+      {
+        "what": "把平台专用可选包误登记进 packages（8 条）",
+        "entries": [
+          "@deepseek-ai/libreoffice-kit-darwin-arm64",
+          "@deepseek-ai/libreoffice-kit-darwin-x64",
+          "@deepseek-ai/libreoffice-kit-win32-arm64",
+          "@deepseek-ai/libreoffice-kit-win32-x64",
+          "@deepseek-ai/node-addon-system-darwin-arm64",
+          "@deepseek-ai/node-addon-system-darwin-x64",
+          "@deepseek-ai/node-addon-system-linux-arm64",
+          "@deepseek-ai/node-addon-system-linux-x64"
+        ],
+        "caughtBy": "构建链自己的 fail-closed 守卫：GHA run 38973801934 的「构建快照」步 —— 「[平台死重剔除中止] @deepseek-ai/node-addon-system-linux-x64 已在 overlay 登记表内」。它拒绝把一个疑似真依赖的包当死重删掉。",
+        "rootCause": "对照法当时的收口太宽：凡是**锁文件里出现**的 @deepseek-ai/* 都收进 packages，而平台专用可选包（linux-x64 / darwin-* / win32-*）在 arm64 安卓上是死重。",
+        "discipline": "上游 main 的 overlay 只登记 1 个平台专用条目（@deepseek-ai/dsh-win32-process，模板原有）⇒ 本表应保持同一纪律：**平台专用可选包不进 packages**。",
+        "fixedAt": "2026-10-17",
+        "fixedBy": "PC side"
+      },
+      {
+        "what": "packages 与其它登记面重复的条目（2 条）",
+        "entries": [
+          {
+            "name": "@deepseek-ai/dsh",
+            "wasVersion": "0.2.1-alpha.5",
+            "why": "root 包由 rootPackage 声明，packages 里再来一份 = 同一件事两个登记面"
+          },
+          {
+            "name": "@deepseek-ai/cosmokit",
+            "wasVersion": "1.8.6-alpha.2",
+            "why": "已在 vendorTop 登记；两份登记 = 同一件事两个面"
+          }
+        ],
+        "rootCause": "对照法按名字前缀（@deepseek-ai/）收口 ⇒ 把根包与已在 vendorTop 的包也收进了 packages。",
+        "discipline": "每个包只在一个登记面：rootPackage（根）/ packages（第一方）/ vendorTop（第三方闭包缺口）/ pins（钉版）。",
+        "fixedAt": "2026-10-17",
+        "fixedBy": "PC side"
       }
     ]
   },

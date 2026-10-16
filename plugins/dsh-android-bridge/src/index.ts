@@ -1729,7 +1729,13 @@ export function apply(ctx: Context, config: Record<string, unknown> = {}) {
         appendLive(JSON.stringify({ t, s, k: 'title', title: String(d?.title ?? '').slice(0, 80) }) + '\n')
       }
     }
-    ctx.on('session/event', (session: unknown, event: unknown) => {
+    // ★ 0.2.1-alpha.5 类型收紧：本插件的 ctx 类型不再并入 session 服务的事件面，
+    //   而 `'session/event'` 在 alpha.5 里**确实存在** —— `@deepseek-ai/dsh-session` 的
+    //   `lib/types/index.d.ts:61` 的 `Events` 接口明写 `'session/event'(this, session, event)`；
+    //   编译产物里也真的会 emit 它。
+    //   ⇒ 只做**类型层**收窄：ctx 本尊照旧（保住 this），只把那一层的类型断开。运行期一字未改。
+    ;(ctx as unknown as { on(key: string, fn: (session: unknown, event: unknown) => void): void })
+      .on('session/event', (session, event) => {
       if (event === null || typeof event !== 'object') return
       const ev = event as { type?: string; data?: Record<string, unknown> }
       const type = ev.type ?? ''

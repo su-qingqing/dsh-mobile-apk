@@ -299,7 +299,7 @@
       ]
     },
     "dsh-host-frontend-static-SN16": {
-      "source": "runtime-capture",
+      "source": "superseded",
       "engine": "0.2.0-rc.2",
       "package": "@deepseek-ai/dsh-host-frontend-static@0.2.0-rc.2",
       "provenance": {
@@ -322,7 +322,7 @@
       },
       "targets": {},
       "patchIds": [],
-      "reason": "Device failure witness with package identity and 59-to-69 graph evidence; canonical published-tarball fixture now provides the sole current G2 patch target. Runtime capture evidence and hashes remain verified."
+      "reason": "Historical artifact; not current-baseline regression input. This is a device-failure witness captured from an installed 0.2.0-rc.2 module (59-to-69 __DSH_BOOT__ graph evidence for patch client-index-loader-barrier-G2); its engine/package identity is kept at the generation it was actually captured from, and it supplies no current patch target (targets/patchIds are empty) — the current G2 target is provided by the canonical published-tarball fixture captured at the current baseline. Cross-check performed 2026-10-17: the captured source bytes are generation-independent — sha256(lib/index.js) = 19bb095c5175bd5dc6532aa97512e2013a132e5073558ba4b059b8ad5b0f19a2 in BOTH the published @deepseek-ai/dsh-host-frontend-static@0.2.0-rc.2 and @0.2.1-alpha.5 tarballs. fileSha256/provenance entries below are retained as the capture-time record; they were verified when the fixture was a runtime-capture gate input and are no longer gate-checked under source=superseded."
     },
     "dsh-root-0.2.0-rc.2": {
       "source": "engine-tgz",

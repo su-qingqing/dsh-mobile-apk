@@ -1,16 +1,22 @@
-/** Retain the exact official 0.2.0-rc.2 pi-ai streaming patch after raw npm overlay extraction. */
+/** Retain the exact official pi-ai streaming patch of the **pinned** version after raw npm overlay extraction. */
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-export const OFFICIAL_PI_PATCH_SHA256 = 'b9bcce474fb2ac44633dff0fa722816a5bff5451b4575d5874035ea14ba70a4f'
+/** 官方补丁按 pi-ai 版本分档（0.2.0-rc.2 走 0.87.1；0.2.1-alpha.5 走 1.1.0）。
+ *  ★两档都必须留：快照来自哪一支就取哪一支的 patch —— 把 0.87.1 的补丁拿到 1.1.0 上必然锚点失配。 */
+export const PI_PATCH_BY_VERSION = Object.freeze({
+  '0.87.1': { file: 'pi-ai-0.87.1.patch', sha256: 'b9bcce474fb2ac44633dff0fa722816a5bff5451b4575d5874035ea14ba70a4f' },
+  '1.1.0': { file: 'pi-ai-1.1.0.patch', sha256: '66eaf960054f10441b93ac3857114e96c1901f6d183713e2f21437b007111644' },
+})
+export const OFFICIAL_PI_PATCH_SHA256 = PI_PATCH_BY_VERSION['0.87.1'].sha256
 export const PI_STREAMING_FILES = Object.freeze([
   'dist/api/anthropic-messages.js', 'dist/api/bedrock-converse-stream.js',
   'dist/api/mistral-conversations.js', 'dist/api/openai-completions.js',
   'dist/api/openai-responses-shared.js', 'dist/api/pi-messages.js',
 ])
-const PATCH = join(dirname(fileURLToPath(import.meta.url)), 'upstream', 'pi-ai-0.87.1.patch')
+const PATCH_DIR = join(dirname(fileURLToPath(import.meta.url)), 'upstream')
 
 /**
  * Prepare all six file replacements before any write; exact upstream context, no fuzzy patching.
@@ -20,12 +26,13 @@ const PATCH = join(dirname(fileURLToPath(import.meta.url)), 'upstream', 'pi-ai-0
  */
 export function planPiStreaming(packageRoot, read = file => readFileSync(join(packageRoot, file), 'utf8')) {
   const manifest = JSON.parse(read('package.json'))
-  if (manifest.name !== '@earendil-works/pi-ai' || manifest.version !== '0.87.1') {
-    throw new Error('pi-upstream-streaming-020 requires @earendil-works/pi-ai@0.87.1')
+  const pinned = manifest.name === '@earendil-works/pi-ai' ? PI_PATCH_BY_VERSION[manifest.version] : undefined
+  if (!pinned) {
+    throw new Error('pi-upstream-streaming-020 requires @earendil-works/pi-ai@' + Object.keys(PI_PATCH_BY_VERSION).join('|'))
   }
-  const bytes = readFileSync(PATCH)
-  if (createHash('sha256').update(bytes).digest('hex') !== OFFICIAL_PI_PATCH_SHA256) {
-    throw new Error('official pi-ai streaming patch SHA-256 mismatch')
+  const bytes = readFileSync(join(PATCH_DIR, pinned.file))
+  if (createHash('sha256').update(bytes).digest('hex') !== pinned.sha256) {
+    throw new Error('official pi-ai streaming patch SHA-256 mismatch: ' + pinned.file)
   }
   const sections = bytes.toString('utf8').split(/^diff --git /m).slice(1)
   const plans = sections.map(section => {

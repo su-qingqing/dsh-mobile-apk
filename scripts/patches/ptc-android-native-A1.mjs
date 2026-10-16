@@ -80,57 +80,72 @@ export function patchEnvironment(text, source = false) {
 }
 /** Reject policy drift: only the existing resolved full-access mode skips confinement. */
 export function assertPolicyGate(text) {
-  oneMatch(text, /confined = policy\.mode === (['"])danger-full-access\1 \? (?:undefined|void 0) : await this\.ctx\.sandbox\.confine\(argv,/, 'resolved-policy confinement gate')
+  // 【2】改法：不再要求「恰好一处」。二段式 —— ①至少一处；②同族出现数 === 合规定式数。
+  const gateLoose = /confined = policy\.mode ===/g
+  const gateStrict = /confined = policy\.mode === (['"])danger-full-access\1 \? (?:undefined|void 0) : await this\.ctx\.sandbox\.confine\(argv,/g
+  const nLoose = [...text.matchAll(gateLoose)].length
+  const nStrict = [...text.matchAll(gateStrict)].length
+  if (nStrict === 0) fail('resolved-policy confinement gate: expected at least one reviewed anchor, got 0')
+  if (nLoose !== nStrict) fail('resolved-policy confinement gate: ' + nLoose + ' sites but only ' + nStrict + ' match the reviewed form')
   if (!/error instanceof SandboxUnavailableError \? (['"])sandbox-unavailable\1/.test(text)) fail('sandbox-unavailable classification absent')
   if (!/argv:\s*confined\?\.argv \?\? argv/.test(text)) fail('spawn no longer consumes enforcing argv')
 }
 /** The OS allowlist must not expose host environment values to model-authored JS. */
 export function assertChildClearing(text) {
   if (!/!STARTUP_ENVIRONMENT_NAMES\.has\(key\.toUpperCase\(\)\)/.test(text)
-    || !/Reflect\.deleteProperty\(processState\.env, key\)/.test(text)
-    || !/processState\.env = Object\.create\(null\)/.test(text)) fail('reviewed child environment clearing is absent')
+    || !/Reflect\.deleteProperty\(\w+\.env, key\)/.test(text)
+    || !/\w+\.env = Object\.create\(null\)/.test(text)) fail('reviewed child environment clearing is absent')
 }
 function helper(source) {
   return source ? LAUNCH_HELPER_JS.replace('function dshMobilePtcLaunchPrefix(executable)', 'function dshMobilePtcLaunchPrefix(executable: string): string[]') : LAUNCH_HELPER_JS
 }
-function launchBlock(indent, source) {
+/** 版本分档：0.2.1-alpha.5 把启动配置收进 this.config.launch。
+ *  从目标源码自身判定 —— 旧版（rc.2）那条链必须继续可打。 */
+function launchAlpha5(text) { return text.includes('this.config.launch.executable') }
+function launchBlock(indent, source, alpha5) {
   const absent = source ? 'undefined' : 'void 0'
   const tick = String.fromCharCode(96)
+  const cfg = alpha5 ? 'this.config.launch' : 'this.config'
   return [
-    'const executable = await this.ctx.subprocess.resolveExecutable(this.config.nodeExecutable, ' + absent + ', signal);',
+    'const executable = await this.ctx.subprocess.resolveExecutable(' + (alpha5 ? 'this.config.launch.executable' : 'this.config.nodeExecutable') + ', ' + absent + ', signal);',
     'if (settled) return await result.promise;',
     'const launchPrefix = dshMobilePtcLaunchPrefix(executable);',
     'if (launchPrefix.length === 2) {',
     '  launchPrefix[1] = await this.ctx.subprocess.resolveExecutable(launchPrefix[1], ' + absent + ', signal);',
     '  if (settled) return await result.promise;',
     '}',
-    "const packaged = 'pkg' in process && this.config.bootstrapPath === " + absent + ';',
+    alpha5
+      ? 'const packaged = this.config.launch.kind === "embedded";'
+      : "const packaged = 'pkg' in process && this.config.bootstrapPath === " + absent + ';',
     'const heapFlag = ' + tick + '--max-old-space-size=$' + '{this.config.maxOldGenerationSizeMb}' + tick + ';',
     '// Heap options belong to Node, never between linker64 and its absolute program path.',
-    'const argv = [...launchPrefix, ...bootstrapArgs(this.ctx.fs, this.config, this.config.maxMessageBytes)];',
+    'const argv = [...launchPrefix, ...bootstrapArgs(this.ctx.fs, ' + cfg + ', this.config.maxMessageBytes)];',
   ].map(line => indent + line).join('\n')
 }
 /** Replace the reviewed launch block, including the old L1 guard if it was applied first. */
 export function patchRuntimeIndex(text, source = false) {
   assertPolicyGate(text)
+  const a5 = launchAlpha5(text)
   if (text.includes(LAUNCH_MARKER)) {
     if (!text.includes(helper(source)) || text.split(LAUNCH_MARKER).length !== 2) fail('incomplete or modified launch helper')
-    const launch = oneMatch(text, /^([\t ]*)const executable = await this\.ctx\.subprocess\.resolveExecutable\(this\.config\.nodeExecutable,[\s\S]*?\n\1const argv = \[\.\.\.launchPrefix,[^\n]*\];/m, 'patched launch block')
-    if (launch[0] !== launchBlock(launch[1], source)) fail('modified native launch block')
+    const launch = oneMatch(text, /^([\t ]*)const executable = await this\.ctx\.subprocess\.resolveExecutable\(this\.config\.(?:launch\.executable|nodeExecutable),[\s\S]*?\n\1const argv = \[\.\.\.launchPrefix,[^\n]*\];/m, 'patched launch block')
+    if (launch[0] !== launchBlock(launch[1], source, a5)) fail('modified native launch block')
     oneMatch(text, /env\.NODE_OPTIONS = heapFlag;/, 'owned heap flag')
     if (/if \(packaged\) \{[^}]*env\.NODE_OPTIONS = heapFlag/.test(text)) fail('heap flag is still packaged-only')
     return text
   }
-  const launch = oneMatch(text, /^([\t ]*)const executable = await this\.ctx\.subprocess\.resolveExecutable\(this\.config\.nodeExecutable, (?:undefined|void 0), signal\);?[\s\S]*?\n\1const argv = \[[\s\S]*?\];?\n/m, 'upstream Node launch block')
+  const launch = oneMatch(text, /^([\t ]*)const executable = await this\.ctx\.subprocess\.resolveExecutable\(this\.config\.(?:launch\.executable|nodeExecutable), (?:undefined|void 0), signal\);?[\s\S]*?\n\1const argv = \[[\s\S]*?\];?\n/m, 'upstream Node launch block')
   if (!/if \(settled\) return await result\.promise/.test(launch[0])
-    || !/const packaged = (['"])pkg\1 in process && this\.config\.bootstrapPath === (?:undefined|void 0)/.test(launch[0])
+    || !(a5
+      ? /const packaged = this\.config\.launch\.kind === (['"])embedded\1/.test(launch[0])
+      : /const packaged = (['"])pkg\1 in process && this\.config\.bootstrapPath === (?:undefined|void 0)/.test(launch[0]))
     || !/const heapFlag = \u0060--max-old-space-size=\$\{this\.config\.maxOldGenerationSizeMb\}\u0060/.test(launch[0])
-    || !/bootstrapArgs\(this\.ctx\.fs, this\.config, this\.config\.maxMessageBytes\)/.test(launch[0])) fail('launch block differs from reviewed upstream')
+    || !/bootstrapArgs\(this\.ctx\.fs, this\.config(?:\.launch)?, this\.config\.maxMessageBytes\)/.test(launch[0])) fail('launch block differs from reviewed upstream')
   const noComments = launch[0].replace(/^[\t ]*\/\/[^\n]*\n/gm, '')
   if (/\b(?:spawn|confine|catch|policy|env)\b/.test(noComments)) fail('unexpected statements in launch block')
   const oldLinkerGuard = launch[0].includes('resolved node executable is the system dynamic linker')
   if (launch[0].includes('__dshMobileExecBase') !== oldLinkerGuard) fail('unrecognized legacy executable guard')
-  text = replaceMatch(text, launch, launchBlock(launch[1], source) + '\n')
+  text = replaceMatch(text, launch, launchBlock(launch[1], source, a5) + '\n')
   const nested = /^([\t ]*)if \(packaged\) \{\n\1[\t ]+env\.DSH_PTC_RUNTIME_NODE = (['"])1\2;?\n\1[\t ]+env\.NODE_OPTIONS = heapFlag;?\n\1\};?/m.exec(text)
   if (nested) text = replaceMatch(text, nested, nested[1] + 'env.NODE_OPTIONS = heapFlag;\n' + nested[1] + 'if (packaged) {\n' + nested[1] + '  env.DSH_PTC_RUNTIME_NODE = "1";\n' + nested[1] + '}')
   else if (!/env\.NODE_OPTIONS = heapFlag;/.test(text)) fail('owned heap flag anchor absent')
@@ -155,7 +170,7 @@ function rejectReadonlyCheckout(root) {
 /** Preflight all files before writes; anchor/version failures leave the target untouched. */
 export function planPatch(packageRoot, source = false, read = name => readFileSync(resolve(packageRoot, name), 'utf8')) {
   const manifest = JSON.parse(read('package.json'))
-  if (manifest.name !== PACKAGE_NAME || manifest.version !== PACKAGE_VERSION) fail('requires ' + PACKAGE_NAME + '@' + PACKAGE_VERSION)
+  if (manifest.name !== PACKAGE_NAME || !['0.2.0-rc.2', '0.2.1-alpha.5'].includes(manifest.version)) fail('requires ' + PACKAGE_NAME + '@' + PACKAGE_VERSION)
   const names = source ? ['src/environment.ts', 'src/index.ts', 'src/process.ts'] : ['lib/index.js', 'lib/process.js']
   const originals = new Map(names.map(name => [name, read(name)]))
   const outputs = new Map(originals)

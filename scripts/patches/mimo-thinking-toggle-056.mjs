@@ -61,7 +61,7 @@ export function planMimoThinking(read) {
   const piBefore = read(piFile)
   const dshManifest = JSON.parse(read('usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-llm-pi-ai/package.json'))
   const piManifest = JSON.parse(read('usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@earendil-works/pi-ai/package.json'))
-  if (dshManifest.version !== '0.2.0-rc.2' || piManifest.version !== '0.87.1') {
+  if (!['0.2.0-rc.2', '0.2.1-alpha.5'].includes(dshManifest.version) || !['0.87.1', '1.1.0'].includes(piManifest.version)) {
     throw new Error('mimo-thinking-toggle-056 requires dsh-llm-pi-ai@0.2.0-rc.2 and pi-ai@0.87.1')
   }
   return [

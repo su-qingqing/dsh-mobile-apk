@@ -262,7 +262,7 @@
       ],
       "scope": "engine",
       "summary": "保留官方0.2.0-rc.2的pi-ai0.87.1六个provider streaming补丁，raw overlay之后严格恢复",
-      "provenance": "Official639ed015 patches/@earendil-works__pi-ai@0.87.1.patch SHA256 b9bcce474fb2ac44633dff0fa722816a5bff5451b4575d5874035ea14ba70a4f; exact context/idempotent, no fuzzy matching",
+      "provenance": "Official1517a4db patches/@earendil-works__pi-ai@1.1.0.patch SHA256 66eaf960054f10441b93ac3857114e96c1901f6d183713e2f21437b007111644; exact context/idempotent, no fuzzy matching",
       "marker": "official pi-ai0.87.1 six-file streaming state checked by exact pinned contexts",
       "verifier": "pi-upstream-streaming-020"
     },

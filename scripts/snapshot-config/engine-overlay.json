@@ -297,7 +297,6 @@
     "@deepseek-ai/dsh-subagent-codex": "0.2.1-alpha.5",
     "@deepseek-ai/dsh-subagent-dsh-sdk": "0.2.1-alpha.5",
     "@deepseek-ai/dsh-subagent-fork-in-process": "0.2.1-alpha.5",
-    "@deepseek-ai/dsh-subagent-in-process-driver": "0.2.1-alpha.5",
     "@deepseek-ai/dsh-subagent-spawn-in-process": "0.2.1-alpha.5",
     "@deepseek-ai/dsh-subprocess": "0.2.1-alpha.5",
     "@deepseek-ai/dsh-subprocess-local": "0.2.1-alpha.5",
@@ -979,7 +978,8 @@
       "packages 的真实面是**源码构建导出集**（source-build export），与 npm / lock 解析集不同面。",
       "vendorTop 的**成员集合**沿用模板（+ 实测新增），成员本身未由上游门禁核过。",
       "packagesTemplateOnlyKept 的退役 / 漏登记归属未定（裁定2 要求逐条核）。",
-      "【2】confinement 门改法待老板点头（补丁侧已在两棵树上实测 23/23）。"
+      "【2】confinement 门改法待老板点头（补丁侧已在两棵树上实测 23/23）。",
+      "已核（2026-10-17）：packages/vendorTop/nested/pins/rootPackage 的**在场性**已全量核过（434 条 / 404 仅 1 条）。仍未核的是**成员集合的完整性**（有没有该登记的漏登记）——那要读源码构建导出集，归 GHA 的 check-engine-overlay.mjs 反证。"
     ],
     "reviewedRetirements": [
       {
@@ -987,6 +987,15 @@
         "templateVersion": "0.2.0-rc.2",
         "action": "REMOVED from packages",
         "why": "alpha.5 里这个子系统整个不存在，三条独立信号：① npm registry 上该包最新只到 0.2.0-rc.2，没有 0.2.1-alpha.5；② 不在 alpha.5 的解析图里（而同为 rc.2 独有的另外 9 个包都已重发到 0.2.1-alpha.5）；③ alpha.5 的引擎树里没有任何包注册 `invariants` 服务（rc.2 里它是唯一提供者、38 个包 inject 它），   客户端适配层那边的 `src/invariant.ts` 也一并删掉了。⇒ 保留登记会让 check-engine-overlay.mjs 判红（登记的包必须物理在场），而它物理上不可能在场。",
+        "reviewedAt": "2026-10-17",
+        "reviewedBy": "PC side"
+      },
+      {
+        "name": "@deepseek-ai/dsh-subagent-in-process-driver",
+        "templateVersion": "0.2.1-alpha.5",
+        "action": "REMOVED from packages；并登记进 slim.json 的 engineStalePackages（基座残留，构建期剔除）",
+        "why": "上游在 alpha 线中途把这个包拆成两个：@deepseek-ai/dsh-subagent-fork-in-process 与 @deepseek-ai/dsh-subagent-spawn-in-process（两条都已在 packages 登记且版本可取）。三条独立信号：① npm 上该名**最后一版是 0.2.1-alpha.1**（共 28 版，registry.npmjs.org 与 registry.npmmirror.com 列表一致 ⇒ 不是镜像滞后），0.2.1-alpha.5 两端都是 404；② alpha.5 官方源树 377 个 package.json 里零命中；③ 构建链已实锤判红：GHA run 38974399262「构建快照」步 `[引擎 overlay 失败——快照不可发布] Error: overlay 元数据不可得: @deepseek-ai/dsh-subagent-in-process-driver@0.2.1-alpha.5`。⇒ 保留登记会让 overlayTgz 必然硬失败（它要求 npm 上真有该版本）；而只从 packages 删掉、不作其它处理，又会让基座引擎树带出的这一代残留变成反向面门禁的幽灵包 （既未登记、也不在依赖闭包内）⇒ 必须同时进 slim.json。",
+        "evidence": "全量 registry 存在性扫描 2026-10-17：overlay 全部登记面去重后 434 个 name@version 逐个查 registry.npmjs.org，404 仅此 1 条，其余 433 条可取（明细 mirror/registry-sweep.txt / .json）。",
         "reviewedAt": "2026-10-17",
         "reviewedBy": "PC side"
       }
@@ -1074,9 +1083,20 @@
         ],
         "rootCause": "对照法只在 alpha.5 的 **npm 解析图**里找版本，而这批包不在图里（它们是源码构建导出集/装配面的一部分）⇒ 版本停在模板值。",
         "fix": "alpha.5 是一次发布，第一方 @deepseek-ai/dsh-* 一律 0.2.1-alpha.5 ⇒ 按发布线统一抬版。",
-        "stillUnverified": "这 %d 条在 alpha.5 的**真快照**里到底在不在场，本机判不了 —— flat-alpha5 只是 npm 安装集，不是源码构建导出集。门禁（check-engine-overlay.mjs）会逐条给出在场/缺席；缺席的要**复核后退役**。",
+        "stillUnverified": "已收口（2026-10-17）：这 39 条『在 alpha.5 真快照里到底在不在场』改由 npm registry 的**存在性**全量判，不再等 GHA 逐条报。全量扫描：overlay 全部登记面（packages / vendorTop / nested / pins / rootPackage）去重后 434 个 name@version，逐个查 registry.npmjs.org ⇒ 404 只有 1 条（@deepseek-ai/dsh-subagent-in-process-driver，已按 reviewedRetirements 退役并转入 slim.json 基座残留），其余 433 条取得到。原判据仍然成立、不可删：**在场性**判得了，**成员集合是否完整**（该登记的有没有漏登记）仍归 GHA 的 check-engine-overlay.mjs 反证 ——那是源码构建导出集的面，本机没有该面。",
         "fixedAt": "2026-10-17",
         "fixedBy": "PC side"
+      },
+      {
+        "what": "overlayTgz 的镜像回退只回退『包文档 200』，不回退『该版本在文档里缺失』（潜在缺陷；本轮未发作）",
+        "location": "scripts/build-snapshot-013.mjs:222-231",
+        "why": "镜像链是 preinstall.json 的 npmMirrors = [registry.npmjs.org, registry.npmmirror.com]。循环里取到第一个 `r.ok` 的**包文档**就 `break`，随后 `meta?.versions?.[version]?.dist` 缺失即 throw —— 不再试下一个镜像。预发布版本（0.2.1-alpha.5 这类）恰是镜像最容易滞后的对象：npmjs 短暂不可用（429/5xx/超时）时回退到 npmmirror，若其文档尚未收录该版本，构建会以『overlay 元数据不可得』硬失败，而真因是镜像滞后、包其实存在。症状与本次那条真退役**完全同形**，排查时会被带错方向。",
+        "evidence": "本轮已实证**不是**此因：subagent-in-process-driver@0.2.1-alpha.5 在两个镜像上都是 404，且两镜像的版本列表逐条一致 ⇒ 镜像滞后这一解释被排除，那次是上游真退役。本条只是把它记成『已知缺陷』，不作为归因。",
+        "suggestedFix": "把 break 条件从『r.ok』改成『r.ok 且 meta.versions[version].dist 在场』，全部镜像试完再 throw。npmjs 在前、版本齐全时行为逐字节不变 ⇒ 纯健壮性提升，无回归面。",
+        "notFixedBecause": "该文件在 check-patch-mirror.mjs 的**逐字节双仓镜像面**内（AGENTS.md 雷点 10：协调仓 + apk 仓云端副本必须同改），单边改动会破镜像门禁 ⇒ 需要与平板端确认双仓同步窗口后再动。",
+        "status": "recorded-not-fixed",
+        "recordedAt": "2026-10-17",
+        "recordedBy": "PC side"
       }
     ]
   },

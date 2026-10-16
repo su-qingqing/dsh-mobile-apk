@@ -208,7 +208,6 @@
     "@deepseek-ai/dsh-host-product-telemetry-otel": "0.2.1-alpha.5",
     "@deepseek-ai/dsh-host-webserver": "0.2.1-alpha.5",
     "@deepseek-ai/dsh-http-proxy": "0.2.1-alpha.5",
-    "@deepseek-ai/dsh-invariants": "0.2.0-rc.2",
     "@deepseek-ai/dsh-jobs": "0.2.1-alpha.5",
     "@deepseek-ai/dsh-jobs-local": "0.2.1-alpha.5",
     "@deepseek-ai/dsh-launch-environment": "0.2.1-alpha.5",
@@ -991,6 +990,16 @@
       "vendorTop 的**成员集合**沿用模板（+ 实测新增），成员本身未由上游门禁核过。",
       "packagesTemplateOnlyKept 的退役 / 漏登记归属未定（裁定2 要求逐条核）。",
       "【2】confinement 门改法待老板点头（补丁侧已在两棵树上实测 23/23）。"
+    ],
+    "reviewedRetirements": [
+      {
+        "name": "@deepseek-ai/dsh-invariants",
+        "templateVersion": "0.2.0-rc.2",
+        "action": "REMOVED from packages",
+        "why": "alpha.5 里这个子系统整个不存在，三条独立信号：① npm registry 上该包最新只到 0.2.0-rc.2，没有 0.2.1-alpha.5；② 不在 alpha.5 的解析图里（而同为 rc.2 独有的另外 9 个包都已重发到 0.2.1-alpha.5）；③ alpha.5 的引擎树里没有任何包注册 `invariants` 服务（rc.2 里它是唯一提供者、38 个包 inject 它），   客户端适配层那边的 `src/invariant.ts` 也一并删掉了。⇒ 保留登记会让 check-engine-overlay.mjs 判红（登记的包必须物理在场），而它物理上不可能在场。",
+        "reviewedAt": "2026-10-17",
+        "reviewedBy": "PC side"
+      }
     ]
   },
   "generatedBy": "contrast against kelai141/dsh-mobile-apk @ f61539e3cb7e6f5ea37fc14d980510de9961f708; engine identity deepseek-ai/deepseek-harness @ dsh-v0.2.1-alpha.5"

@@ -90,7 +90,7 @@ export function registerConversationDock(ctx: Context): void {
       const target = conversationTarget(address)
       const snapshot = ctx.sessions.list.getSnapshot()
       if (target !== undefined && typeof target !== 'string') {
-        const label = snapshot.projectionsBySession[target.parentSessionId]?.values.subagentCatalog?.find(entry => entry.id === target.childSessionId)?.label
+        const label = snapshot.projectionsBySession[target.parentSessionId]?.values.subagentCatalog?.find((entry: { id?: string; label?: string }) => entry.id === target.childSessionId)?.label
         if (label) return label
       }
       const id = conversationId(address)

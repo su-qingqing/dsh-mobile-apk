@@ -42,7 +42,12 @@ test('enabled gateway browser exports do not race host fiber; controllers remain
     }
     const ctx = { loader: { entries: () => rows, internal: { version: 'v2', resolveSync(base, { specifier }) { return { url: pathToFileURL(join(pkgs.get(specifier), 'host.js')).href } } } }, logger: { warn() {}, error() {} }, on(event, cb) { hooks.set(event, cb) }, inject() {} }
     for (const [name, source] of [['baseline', pristine], ['candidate', candidate]]) {
-      const file = join(scratch, name + '.mjs'); writeFileSync(file, source)
+      // 同 C4 测试：alpha.5 起 dsh-client-modules 在模块求值期用
+      // createRequire(import.meta.url)("../package.json") 读包根；../ 相对**模块文件**，故副本要复刻
+      // 真实层级 <pkgDir>/package.json + <pkgDir>/lib/index.mjs，否则 ../package.json 落到 tmpdir()。
+      const pkgDir = join(scratch, 'pkg-' + name); const libDir = join(pkgDir, 'lib'); mkdirSync(libDir, { recursive: true })
+      writeFileSync(join(pkgDir, 'package.json'), JSON.stringify({ name: 'dsh-client-modules-fixture', version: '0.0.0', type: 'module' }))
+      const file = join(libDir, 'index.mjs'); writeFileSync(file, source)
       const { ClientModuleRegistry } = await import(pathToFileURL(file))
       const registry = new ClientModuleRegistry(ctx)
       const graph = registry.graph()

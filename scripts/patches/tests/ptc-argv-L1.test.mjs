@@ -13,9 +13,11 @@
 //
 // 本测试对**工厂夹具**（构建期同一批 tgz 写出，与快照引擎树逐字节同源）断言，实测四条反证均判红。
 // 用法：node scripts/patches/tests/ptc-argv-L1.test.mjs
-import { readFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, copyFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { spawnSync } from 'node:child_process'
 import { versionedFixture } from './lib/fixture.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -29,62 +31,37 @@ function check(label, ok, detail) {
 }
 
 const MARKER = 'dsh-mobile ptc argv heap via NODE_OPTIONS (L1)'
+const TARGET_REL = 'usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-ptc-runtime-node/lib/index.js'
 const FIXTURE = versionedFixture('dsh-ptc-runtime-node', 'lib', 'index.js')
+const FIXTURE_PKG = versionedFixture('dsh-ptc-runtime-node', 'package.json')
 const APPLY = readFileSync(join(repoRoot, 'scripts', 'patches', 'apply-patches.mjs'), 'utf8')
 const REGISTRY = JSON.parse(readFileSync(join(repoRoot, 'scripts', 'patches', 'registry.json'), 'utf8'))
 const RAW = readFileSync(FIXTURE, 'utf8')
 
-// 断言用施加后的结果：直接调用生产 IMPL（不在测试里复刻替换逻辑，避免「测的是副本」）。
-// apply-patches.mjs 是 CLI 脚本，不能整体 import；按其自述的 IMPL 契约在此重放同一次替换，
-// 并断言「改法」本身在场（下面第 ⑥ 组锁 apply-patches 里的锚点与守卫文本）。
-function applyPatch(text) {
-  const execOld = [
-    '\t\t\tconst executable = await this.ctx.subprocess.resolveExecutable(this.config.nodeExecutable, void 0, signal);',
-    '\t\t\tif (settled) return await result.promise;',
-  ].join('\n')
-  const argvOld = [
-    '\t\t\tconst argv = [',
-    '\t\t\t\texecutable,',
-    '\t\t\t\t...packaged ? [] : [heapFlag],',
-    '\t\t\t\t...bootstrapArgs(this.ctx.fs, this.config, this.config.maxMessageBytes)',
-    '\t\t\t];',
-  ].join('\n')
-  const envOld = [
-    '\t\t\tif (packaged) {',
-    '\t\t\t\tenv.DSH_PTC_RUNTIME_NODE = "1";',
-    '\t\t\t\tenv.NODE_OPTIONS = heapFlag;',
-    '\t\t\t}',
-  ].join('\n')
-  if (!text.includes(execOld) || !text.includes(argvOld) || !text.includes(envOld)) {
-    throw new Error('夹具上锚点未命中——夹具版本与补丁面不同代')
+// 断言用施加后的结果，**驱动生产入口** apply-patches.mjs（--only ptc-argv-L1），不在测试里复刻替换逻辑。
+// 旧版这里是一份本地重放，锚点写死成 rc.2 的 this.config.nodeExecutable。alpha.5 把该字段收进
+// this.config.launch（nodeExecutable -> launch.executable；bootstrapArgs 的 cfg 参数随之改变），
+// 生产侧 apply-patches.mjs:835-836 已按目标源码分档，而这份副本没有 ⇒ 测试与产物不同代、直接判红
+// （实测 GHA run 38975648587「构建 APK」步：4 项未声明失败，本文件占 2 项）。
+// 复刻逻辑 = 测副本；改为驱动真 CLI 后，上游再改字段名也不会让本测试失真。
+function patchedWithProductionCli() {
+  const scratch = mkdtempSync(join(tmpdir(), 'ptc-argv-L1-'))
+  try {
+    const target = join(scratch, TARGET_REL)
+    mkdirSync(dirname(target), { recursive: true })
+    copyFileSync(FIXTURE, target)
+    // 真实引擎树里 <pkg>/package.json 恒在 lib/ 的上一级；scratch 树按同一形态铺。
+    copyFileSync(FIXTURE_PKG, join(dirname(dirname(target)), 'package.json'))
+    const r = spawnSync(process.execPath,
+      [join(repoRoot, 'scripts', 'patches', 'apply-patches.mjs'), scratch,
+        '--apply', '--scope', 'engine', '--only', 'ptc-argv-L1'], { encoding: 'utf8' })
+    if (r.status !== 0) {
+      throw new Error((r.stdout + r.stderr).trim().split('\n').slice(-2).join(' | ') || 'apply-patches 退出码非 0')
+    }
+    return readFileSync(target, 'utf8')
+  } finally {
+    rmSync(scratch, { recursive: true, force: true })
   }
-  const execNew = [
-    '\t\t\tconst executable = await this.ctx.subprocess.resolveExecutable(this.config.nodeExecutable, void 0, signal);',
-    '\t\t\t' + MARKER + ': fail loud on an unusable executable.',
-    '\t\t\tif (typeof executable !== \'string\' || !isAbsolute(executable)) {',
-    '\t\t\t\tthrow new Error(\'ptc-runtime-node: resolved node executable is not an absolute path\');',
-    '\t\t\t}',
-    '\t\t\tconst __dshMobileExecBase = executable.slice(executable.lastIndexOf(\'/\') + 1);',
-    '\t\t\tif (/^(?:ld\\.so(?:\\.[0-9]+)*|linker(?:64)?)$/.test(__dshMobileExecBase)) {',
-    '\t\t\t\tthrow new Error(\'ptc-runtime-node: resolved node executable is the system dynamic linker\');',
-    '\t\t\t}',
-    '\t\t\tif (settled) return await result.promise;',
-  ].join('\n')
-  const argvNew = [
-    '\t\t\t// ' + MARKER + ': the heap flag must never sit at argv[1].',
-    '\t\t\tconst argv = [',
-    '\t\t\t\texecutable,',
-    '\t\t\t\t...bootstrapArgs(this.ctx.fs, this.config, this.config.maxMessageBytes)',
-    '\t\t\t];',
-  ].join('\n')
-  const envNew = [
-    '\t\t\t// ' + MARKER + ': set for every spawn, not only packaged runs.',
-    '\t\t\tenv.NODE_OPTIONS = heapFlag;',
-    '\t\t\tif (packaged) {',
-    '\t\t\t\tenv.DSH_PTC_RUNTIME_NODE = "1";',
-    '\t\t\t}',
-  ].join('\n')
-  return text.replace(execOld, execNew).replace(argvOld, argvNew).replace(envOld, envNew)
 }
 
 // ── (a) 旧形态必须真实存在于夹具里（证明锚点不是空转）───────────────────────
@@ -92,10 +69,23 @@ check('夹具里存在旧形态 argv 项 `...packaged ? [] : [heapFlag],`',
   RAW.includes('...packaged ? [] : [heapFlag],'))
 check('夹具里 heapFlag 由 maxOldGenerationSizeMb 构造（heapFlag 定义在场）',
   RAW.includes('const heapFlag = `--max-old-space-size=${this.config.maxOldGenerationSizeMb}`;'))
+// ★版本分档（2026-10-17）：断言按夹具实际形态取，不写死某一代 —— 写死正是本测试此前失真的原因。
+// alpha.5 把启动配置收进 this.config.launch（nodeExecutable -> launch.executable）。
+const HAS_ALPHA5_FIELD = RAW.includes('resolveExecutable(this.config.launch.executable,')
+const HAS_RC2_FIELD = RAW.includes('resolveExecutable(this.config.nodeExecutable, void 0, signal)')
+check('夹具形态恰好命中一档（nodeExecutable / launch.executable 不同时在场）',
+  HAS_ALPHA5_FIELD !== HAS_RC2_FIELD, `alpha5=${HAS_ALPHA5_FIELD} rc2=${HAS_RC2_FIELD}`)
+const EXEC_REF = HAS_ALPHA5_FIELD ? 'this.config.launch.executable' : 'this.config.nodeExecutable'
 check('夹具里 executable 由 resolveExecutable 解析（守卫有用武之地）',
-  RAW.includes('resolveExecutable(this.config.nodeExecutable, void 0, signal)'))
+  RAW.includes(`resolveExecutable(${EXEC_REF}, void 0, signal)`), EXEC_REF)
 
-const OUT = applyPatch(RAW)
+// 施加走生产入口；它失败就意味着「补丁面与这一代夹具不同代」，立即判红并把最后两行错误打出来。
+const OUT = (() => {
+  try { return patchedWithProductionCli() } catch (e) {
+    console.log('FAIL  生产入口 apply-patches.mjs --only ptc-argv-L1 施加成功 -> ' + e.message)
+    process.exit(1)
+  }
+})()
 
 // ── (b) marker 在场 ────────────────────────────────────────────────────────
 check('施加后 marker 在场', OUT.includes(MARKER))
@@ -133,6 +123,8 @@ check('registry marker 与 IMPL 一致', !!reg && reg.marker === MARKER)
 check('registry target 指向 ptc-runtime-node/lib/index.js',
   !!reg && reg.target === 'usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-ptc-runtime-node/lib/index.js')
 check('apply-patches 里 IMPL 的 OLD 锚点含旧 argv 项', APPLY.includes('...packaged ? [] : [heapFlag],'))
+check('apply-patches 对 executable 字段分档（两代都认，不写死）',
+  APPLY.includes('this.config.launch.executable') && APPLY.includes('this.config.nodeExecutable'))
 check('apply-patches 锚点未命中时抛可执行指引',
   APPLY.includes('ptc-argv 锚点未命中') && APPLY.includes('引擎升级后请人工核对'))
 check('apply-patches 写回后自查 marker', APPLY.includes("if (!s.includes('" + MARKER + "')) throw new Error('ptc-argv 复核失败"))

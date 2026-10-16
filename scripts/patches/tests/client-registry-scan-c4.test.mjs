@@ -20,7 +20,13 @@ try {
  const variants=[['baseline',pristine],['candidate',planClientRegistryScan(pristine)]];
  const outputs=[];
  for(const [name,file] of variants){
-  const target=join(scratch,name+'.mjs');writeFileSync(target,file);
+  // alpha.5 起 dsh-client-modules 在**模块求值期**用 createRequire(import.meta.url)("../package.json")
+  // 读包根的 package.json（lib/index.js:539）。../ 是相对**模块文件**的，所以副本必须复刻真实层级：
+  // <pkgDir>/package.json + <pkgDir>/lib/index.mjs（真实树 = <pkg>/package.json + <pkg>/lib/index.js）。
+  // 旧写法把副本写到 scratch 根，../package.json 落到 tmpdir()：既不真实，也会撞别的用例。
+  const pkgDir=join(scratch,'pkg-'+name);const libDir=join(pkgDir,'lib');mkdirSync(libDir,{recursive:true});
+  writeFileSync(join(pkgDir,'package.json'),JSON.stringify({name:'dsh-client-modules-fixture',version:'0.0.0',type:'module'}));
+  const target=join(libDir,'index.mjs');writeFileSync(target,file);
   const {ClientModuleRegistry}=await import(pathToFileURL(target));
   const root=join(scratch,name);mkdirSync(root);const baseUrl=pathToFileURL(join(root,'entry.mjs')).href;
   const rows=[];const hooks=new Map();let scans=0, reads=0;

@@ -23,6 +23,11 @@ const here = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(here, '..', '..', '..')
 const TARGET = 'usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-client-modules/lib/index.js'
 const FIXTURE = versionedFixture('dsh-client-modules', 'lib', 'index.js')
+// alpha.5 起 dsh-client-modules/lib/index.js 在**模块求值期**读**包根**的 package.json
+// （lib/index.js:539 `const { version } = createRequire(import.meta.url)("../package.json")`）。
+// 真实引擎树里它恒在 <pkg>/package.json（lib/ 的上一级），而此前这个 scratch 树只放了 lib/index.js ——
+// 那不是产物形态，是测试夹具漏带文件（rc.2 产物不读它，故此前未暴露）。补齐后与真实树一致。
+const FIXTURE_PKG = versionedFixture('dsh-client-modules', 'package.json')
 
 const failures = []
 const check = (label, ok, detail) => {
@@ -43,6 +48,8 @@ try {
   const target = join(scratch, TARGET)
   mkdirSync(dirname(target), { recursive: true })
   copyFileSync(FIXTURE, target)
+  // ../package.json 是**包根**（lib/ 的上一级），不是 lib/ 内 —— 放错层级等于没补。
+  copyFileSync(FIXTURE_PKG, join(dirname(dirname(target)), 'package.json'))
   const pristine = readFileSync(target, 'utf8')
   check('前置：夹具是未打本方补丁的真产物', !pristine.includes('dsh-mobile'))
 

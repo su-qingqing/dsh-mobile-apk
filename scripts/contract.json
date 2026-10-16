@@ -1,14 +1,14 @@
 {
-  "baseline": "0.2.0-rc.2",
-  "cordis": "4.0.4",
-  "schemastery": "3.18.4",
+  "baseline": "0.2.1-alpha.5",
+  "cordis": "4.0.5-alpha.2",
+  "schemastery": "3.18.5-alpha.2",
   "upstreamRepo": ".deploy-tmp/deepseek-harness",
   "upstream": {
     "$comment": "0.14.3 source-only target identity. Inventories were read from the official SHA; upstreamRepo and adaptationSourceRepo both select the disposable pinned build checkout. dsh/ and .deploy-tmp/upstream-020rc2 remain readonly historical inputs. No build, patch validation or runtime acceptance is implied.",
-    "tag": "dsh-v0.2.0-rc.2",
-    "describe": "dsh-v0.2.0-rc.2",
-    "commit": "639ed015397290b3745d163aafe02ffee4aa3f84",
-    "rootVersion": "0.2.0-rc.2",
+    "tag": "dsh-v0.2.1-alpha.5",
+    "describe": "dsh-v0.2.1-alpha.5",
+    "commit": "1517a4dbca0a2789ff1d41ba439600f8547d23fa",
+    "rootVersion": "0.2.1-alpha.5",
     "adaptationSourceRepo": ".deploy-tmp/deepseek-harness"
   },
   "runtimeCompat": {
@@ -39,13 +39,13 @@
             "section": "peerDependencies",
             "name": "@deepseek-ai/dsh-native-command",
             "from": "^0.1.0-rc.6",
-            "to": "0.2.0-rc.2"
+            "to": "0.2.1-alpha.5"
           },
           {
             "section": "peerDependencies",
             "name": "@deepseek-ai/dsh-tools",
             "from": "^0.1.0-rc.6",
-            "to": "0.2.0-rc.2"
+            "to": "0.2.1-alpha.5"
           }
         ],
         "reason": "The published 0.1.7 caret peers reject the 0.2 prerelease. This explicitly recorded Android declaration delta prevents silent row disabling; no vendor runtime payload is changed and runtime compatibility is not claimed."

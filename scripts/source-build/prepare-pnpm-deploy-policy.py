@@ -8,9 +8,9 @@ import pathlib
 import subprocess
 import sys
 
-SOURCE_COMMIT = "639ed015397290b3745d163aafe02ffee4aa3f84"
+SOURCE_COMMIT = "1517a4dbca0a2789ff1d41ba439600f8547d23fa"
 PACKAGE_NAME = "@deepseek-ai/dsh-subprocess-local"
-PACKAGE_VERSION = "0.2.0-rc.2"
+PACKAGE_VERSION = "0.2.1-alpha.5"
 PACKAGE_PATH = "packages/subprocess/subprocess-local"
 BUILD_SCRIPT_PATH = f"{PACKAGE_PATH}/scripts/ensure-spawn-helper.mjs"
 ORIGINAL_SELECTOR = (

@@ -9,10 +9,10 @@ import shutil
 import subprocess
 import sys
 
-HARNESS_COMMIT = "639ed015397290b3745d163aafe02ffee4aa3f84"
+HARNESS_COMMIT = "1517a4dbca0a2789ff1d41ba439600f8547d23fa"
 
 PACKAGE_NAME = "@deepseek-ai/dsh-web-frontend"
-PACKAGE_VERSION = "0.2.0-rc.2"
+PACKAGE_VERSION = "0.2.1-alpha.5"
 EXPECTED_FILES = ["dist", "!dist/**/*.map", "!dist/preview.html", "!dist/preview"]
 
 

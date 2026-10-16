@@ -13,8 +13,8 @@ import subprocess
 import sys
 import tarfile
 
-HARNESS_COMMIT = "639ed015397290b3745d163aafe02ffee4aa3f84"
-HARNESS_VERSION = "0.2.0-rc.2"
+HARNESS_COMMIT = "1517a4dbca0a2789ff1d41ba439600f8547d23fa"
+HARNESS_VERSION = "0.2.1-alpha.5"
 SOURCE_OVERRIDES = [
     {"package": package, "path": path, "commit": HARNESS_COMMIT}
     for package, path in [

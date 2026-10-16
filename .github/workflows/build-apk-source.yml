@@ -125,18 +125,18 @@ jobs:
           if [ ! -d .deploy-tmp/deepseek-harness/.git ]; then
             git clone --filter=blob:none --no-checkout --depth=1 https://github.com/deepseek-ai/deepseek-harness.git .deploy-tmp/deepseek-harness
           fi
-          git -C .deploy-tmp/deepseek-harness fetch --depth=1 origin 639ed015397290b3745d163aafe02ffee4aa3f84
-          git -C .deploy-tmp/deepseek-harness fetch --depth=1 origin refs/tags/dsh-v0.2.0-rc.2:refs/tags/dsh-v0.2.0-rc.2
+          git -C .deploy-tmp/deepseek-harness fetch --depth=1 origin 1517a4dbca0a2789ff1d41ba439600f8547d23fa
+          git -C .deploy-tmp/deepseek-harness fetch --depth=1 origin refs/tags/dsh-v0.2.1-alpha.5:refs/tags/dsh-v0.2.1-alpha.5
           # A previous interrupted build may have modified tracked inputs before this checkout.
           # Reset only this dedicated source checkout; preserve ignored dependency caches.
           test "$(realpath .deploy-tmp/deepseek-harness)" = "$(realpath .)/.deploy-tmp/deepseek-harness"
           git -C .deploy-tmp/deepseek-harness checkout -- .
           git -C .deploy-tmp/deepseek-harness clean -fdq
-          git -C .deploy-tmp/deepseek-harness checkout --detach 639ed015397290b3745d163aafe02ffee4aa3f84
-          test "$(git -C .deploy-tmp/deepseek-harness rev-parse HEAD)" = "639ed015397290b3745d163aafe02ffee4aa3f84"
-          test "$(git -C .deploy-tmp/deepseek-harness describe --tags --always)" = "dsh-v0.2.0-rc.2"
-          node -e 'const c=require("./scripts/contract.json"); if(c.upstreamRepo!==".deploy-tmp/deepseek-harness" || c.baseline!=="0.2.0-rc.2" || c.upstream.commit!=="639ed015397290b3745d163aafe02ffee4aa3f84") throw Error("source workflow identity does not match contract")'
-          node -e 'const p=require("./.deploy-tmp/deepseek-harness/package.json"); if(p.version!=="0.2.0-rc.2" || p.packageManager!=="pnpm@11.7.0" || p.engines.node!=="^22.19.0 || >=24.0.0") throw Error("official Harness runtime policy changed")'
+          git -C .deploy-tmp/deepseek-harness checkout --detach 1517a4dbca0a2789ff1d41ba439600f8547d23fa
+          test "$(git -C .deploy-tmp/deepseek-harness rev-parse HEAD)" = "1517a4dbca0a2789ff1d41ba439600f8547d23fa"
+          test "$(git -C .deploy-tmp/deepseek-harness describe --tags --always)" = "dsh-v0.2.1-alpha.5"
+          node -e 'const c=require("./scripts/contract.json"); if(c.upstreamRepo!==".deploy-tmp/deepseek-harness" || c.baseline!=="0.2.1-alpha.5" || c.upstream.commit!=="1517a4dbca0a2789ff1d41ba439600f8547d23fa") throw Error("source workflow identity does not match contract")'
+          node -e 'const p=require("./.deploy-tmp/deepseek-harness/package.json"); if(p.version!=="0.2.1-alpha.5" || p.packageManager!=="pnpm@11.28.5" || p.engines.node!=="^22.19.0 || >=24.0.0") throw Error("official Harness runtime policy changed")'
 
       - name: Checkout pinned component sources
         shell: bash

@@ -20,12 +20,15 @@ const inputLockSha256 = sha256(lockPath)
 const manifestSha256 = sha256(manifestPath)
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
 // --ignore-scripts resolves metadata without executing lifecycle scripts; npm ci follows only this realized graph.
-execFileSync(npm, ['install', '--package-lock-only', '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: directory, stdio: 'inherit' })
+// ★ --legacy-peer-deps：本仓既有插件口径（见 plugins/dsh-android-vdisplay/README.md:57 与坑 #40）。
+//   坑 #174 记着根因：上游运行时门禁判 peer 用 includePrerelease，而 **npm 自己解析 peer 时不带**
+//   ⇒ 精确的预发布 peer（如 dsh-shell@0.2.1-alpha.5）在 runtime 放行、在 npm install 里 ERESOLVE。
+execFileSync(npm, ['install', '--package-lock-only', '--ignore-scripts', '--no-audit', '--no-fund', '--legacy-peer-deps'], { cwd: directory, stdio: 'inherit' })
 if (sha256(manifestPath) !== manifestSha256) throw new Error('lock-only resolution unexpectedly modified package.json')
 const errors = checkPackageLockRoot(directory)
 if (errors.length) throw new Error(errors.join('\n'))
 const resolvedLockSha256 = sha256(lockPath)
-execFileSync(npm, ['ci', '--no-audit', '--no-fund'], { cwd: directory, stdio: 'inherit' })
+execFileSync(npm, ['ci', '--no-audit', '--no-fund', '--legacy-peer-deps'], { cwd: directory, stdio: 'inherit' })
 if (sha256(lockPath) !== resolvedLockSha256 || sha256(manifestPath) !== manifestSha256) {
   throw new Error('npm ci modified its resolved input manifest/lock')
 }

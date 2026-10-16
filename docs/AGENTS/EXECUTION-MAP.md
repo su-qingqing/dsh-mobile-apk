@@ -2250,7 +2250,6 @@ glob:plugins/dsh-android-linux-env/test/*.mjs
 glob:plugins/dsh-android-model-capability/test/*.mjs
 glob:plugins/dsh-model-capability/test/*.mjs
 dsh-client-ui-responsive/src/index.ts
-dsh-client-ui-responsive/src/invariant.ts
 dsh-client-ui-responsive/src/css-modules.d.ts
 dsh-client-ui-responsive/src/react-dom.d.ts
 dsh-client-ui-responsive/src/client/snapshot-panels-observer.ts

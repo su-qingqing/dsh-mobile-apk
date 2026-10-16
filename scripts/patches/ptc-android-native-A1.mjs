@@ -12,7 +12,7 @@ export const PATCH_ID = 'ptc-android-native-A1'
 export const ENV_MARKER = 'dsh-mobile PTC Android native environment (A1)'
 export const LAUNCH_MARKER = 'dsh-mobile PTC Android linker prefix (A1)'
 const PACKAGE_NAME = '@deepseek-ai/dsh-ptc-runtime-node'
-const PACKAGE_VERSION = '0.2.0-rc.2'
+const PACKAGE_VERSIONS = ['0.2.0-rc.2', '0.2.1-alpha.5']
 const BASE_ENV_NAMES = ['PATH', 'PATHEXT', 'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP']
 /** Exact host-owned native settings; no TERMUX_* wildcard, credentials, HOME, or DSH_* inheritance. */
 export const ANDROID_ENV_NAMES = Object.freeze([
@@ -170,7 +170,7 @@ function rejectReadonlyCheckout(root) {
 /** Preflight all files before writes; anchor/version failures leave the target untouched. */
 export function planPatch(packageRoot, source = false, read = name => readFileSync(resolve(packageRoot, name), 'utf8')) {
   const manifest = JSON.parse(read('package.json'))
-  if (manifest.name !== PACKAGE_NAME || !['0.2.0-rc.2', '0.2.1-alpha.5'].includes(manifest.version)) fail('requires ' + PACKAGE_NAME + '@' + PACKAGE_VERSION)
+  if (manifest.name !== PACKAGE_NAME || !PACKAGE_VERSIONS.includes(manifest.version)) fail('requires ' + PACKAGE_NAME + '@' + PACKAGE_VERSIONS.join('|'))
   const names = source ? ['src/environment.ts', 'src/index.ts', 'src/process.ts'] : ['lib/index.js', 'lib/process.js']
   const originals = new Map(names.map(name => [name, read(name)]))
   const outputs = new Map(originals)

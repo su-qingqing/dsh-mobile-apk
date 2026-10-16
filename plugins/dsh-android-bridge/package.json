@@ -32,7 +32,7 @@
     "test": "npm run build && node --test test/capability-gate.test.mjs test/capability-unlock-persistence.test.mjs test/control.test.mjs test/protocol-negotiation.test.mjs test/notify-projection.test.mjs test/privilege-status.test.mjs test/wireless-live.test.mjs test/a11y-freshness.test.mjs test/route-auth.test.mjs test/screen-scope.test.mjs test/shell-ops.test.mjs"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "4.0.5-alpha.2",
+    "@deepseek-ai/cordis": "~4.0.5-alpha.2",
     "@deepseek-ai/dsh-client-ui-settings": "^0.2.1-alpha.5",
     "@deepseek-ai/dsh-client-ui-slots": "^0.2.1-alpha.5",
     "@deepseek-ai/dsh-tools": "^0.2.1-alpha.5",
@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@deepseek-ai/dsh-util-values": "0.2.1-alpha.5",
-    "@deepseek-ai/cordis": "4.0.5-alpha.2",
+    "@deepseek-ai/cordis": "~4.0.5-alpha.2",
     "@deepseek-ai/dsh-client-ui-settings": "0.2.1-alpha.5",
     "@deepseek-ai/dsh-client-ui-slots": "0.2.1-alpha.5",
     "@deepseek-ai/dsh-tools": "0.2.1-alpha.5",

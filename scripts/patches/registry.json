@@ -29,6 +29,14 @@
       "marker": "dsh-mobile generation failure honesty (A4)"
     },
     {
+      "id": "truncated-first-frame-A4",
+      "target": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-session-persistence-jsonl/lib/index.js",
+      "scope": "engine",
+      "summary": "readZstdPrefix / decodeStreamingMigration / decodeCurrentGeneration 三处「无帧」分叉不再把两种情形混成一句：真空（无字节）与首帧残缺（文件被截断）分开诊断，后者点名截断起点字节。**同族三处一次收干净**。",
+      "provenance": "rc.2 真实发布字节（@deepseek-ai/dsh-session-persistence-jsonl@0.2.0-rc.2，sha256 f5650bef896ef852…）。上游 published lib/index.js 里**同一句话出现三处**（差别只在缩进）：:1769 decodeStreamingMigration（历史代次迁移）、:1860 decodeCurrentGeneration（worker 校验）、:2941 readZstdPrefix（当前代读取），三处逐字都是 `if (frames.length === 0) throw new Error(\"empty or header-less Zstandard session log\");`。★ 本补丁**断言命中数恰好 3**（少一处 = 族没一次收干净；多一处 = 上游形态已变），按捕获到的缩进逐处原地替换。危害链条：被截断的日志走到这三行 → 被 decodeStoredLog 的 catch（真产物 :2817）包成 `stored log is corrupt` ⇒ 排查者先读到「空/无 header」再读到「损坏」，两个结论都不是事实（事实是文件被截断）；而且迁移链与 worker 校验链是**另两条**读日志的路，只修当前代读取那一处等于族只收了一半。★ 判据已机器核实（不是断言）：scanZstdFrames（源码 zstd.ts:48-99 / 真产物 :1300）的循环是 `while (offset < buffer.length)`，六处 torn 分支均 `return { frames, tornStart: start }` ⇒ 空 buffer 得 `{frames:[], tornStart:undefined}`、首帧残缺得 `{frames:[], tornStart:<start>}`、magic 坏则直接 throw `invalid frame magic`。三处上下文都已解构出 tornStart（:1768 / :1859 / :2939 逐字 `const { frames, tornStart } = scanZstdFrames(…);`），故判据三处都成立。★ 消费面（读数会怎么变）：外层仍以 SessionPersistenceCorruptionError 抛出并串接内层原文，文案由 `stored log is corrupt: Error: empty or header-less Zstandard session log` 变成 `stored log is corrupt: Error: truncated Zstandard session log: the first frame is incomplete from byte N (the artifact was cut short)`；下游 session-query 仍映射为 SESSION_QUERY_CORRUPT_SESSION（类型未变）。**外层那个 corrupt 断言本补丁不动**（同一族另一个落点，已单列待判）。★ 如实登记**没动的**（两条都已写进回归断言，作为\"我只动这一族\"的凭据）：① 同族另有三处**不同条件**的同一句文案 :1775 `if (first.done)`、:1867 `if (header.done)`、:2950 `if (headerFrame.done)`，上游三处都标了 `/* v8 ignore next */`（非空帧表下不可达），说的是「解码器对非空帧表一个都没产出」，与「文件被截断」不是同一件事；② 另有**非 zstd** 的 `empty or header-less session log` 四处（:971 / :1127 / :1761 / :1854，条件 `headerEnd === -1`，纯 JSONL 连换行都没有）—— 也不在本补丁内。消费面判据来源：苏青青 1017 判决「其余待判项」第 9 条（判：收；与 A4② 同族第二处误标，**同一族一次收干净**）。",
+      "marker": "dsh-mobile truncated first frame diagnosis (A4)"
+    },
+    {
       "id": "market-B",
       "target": "dshmarketplace-plugin/lib/index.js",
       "summary": "安装 runner execPath 安全化：TERMUX__PREFIX 兜底烧写快照内 node 绝对路径",

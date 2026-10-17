@@ -243,6 +243,7 @@
       },
       "patchIds": [
         "generation-failure-A4",
+        "truncated-first-frame-A4",
         "spj-migration-link-F5",
         "publish-exclusive-F7"
       ]
@@ -734,6 +735,6 @@
       ]
     },
     "overlaySha256": "118ac224b49fcdef386b699acda44a08042033cc67bed8b1b4e4af88aef475c7",
-    "registrySha256": "fd2aef7e135d22412db2babe02bdf16a40533fb8e6ee67f6d3af0d3465ec702b"
+    "registrySha256": "0729f57be19a4727bf1a347e2b6674b7f8588918df75ffa78f071b95e70c71e8"
   }
 }

@@ -29,6 +29,7 @@ import { resolveEnginePatchFile } from './resolve-engine-patch-target.mjs'
 import { REQUIRED_SECTIONS_MARKER, REQUIRED_SECTIONS_TYPES_MARKER, planRequiredSectionTypes, planRequiredSections } from './required-sections-A1.mjs'
 import { RELOAD_RESTART_MARKER, planReloadRestartReport } from './reload-restart-report-A3.mjs'
 import { GENERATION_FAILURE_MARKER, planGenerationFailure } from './generation-failure-A4.mjs'
+import { TRUNCATED_FIRST_FRAME_MARKER, planTruncatedFirstFrame } from './truncated-first-frame-A4.mjs'
 
 /* A1 的第二个目标文件（公开类型面）：`required?: boolean` 是给 TS 消费方的契约，
  * 只改运行时会让声明方无法使用该字段。 */
@@ -170,6 +171,14 @@ const IMPLS = {
     scope: 'engine',
     check: (s) => s.includes(RELOAD_RESTART_MARKER),
     apply: (s) => planReloadRestartReport(s),
+  },
+
+  // ── A4①：残缺首帧不再被说成「空/无 header」（与 A4② 同族第二处误标）──
+  'truncated-first-frame-A4': {
+    file: 'usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-session-persistence-jsonl/lib/index.js',
+    scope: 'engine',
+    check: (s) => s.includes(TRUNCATED_FIRST_FRAME_MARKER),
+    apply: (s) => planTruncatedFirstFrame(s),
   },
 
   // ── A4②：generationFailure 不再把未识别异常一律断言成「日志损坏」──

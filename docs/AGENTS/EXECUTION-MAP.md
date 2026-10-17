@@ -2284,6 +2284,7 @@ scripts/patches/tests/mimo-thinking-toggle-056.test.mjs
 scripts/patches/required-sections-A1.mjs
 scripts/patches/reload-restart-report-A3.mjs
 scripts/patches/generation-failure-A4.mjs
+scripts/patches/truncated-first-frame-A4.mjs
 glob:scripts/patches/tests/*.test.mjs
 glob:scripts/patches/tests/fixtures/**
 glob:scripts/snapshot-config/*

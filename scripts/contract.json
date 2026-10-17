@@ -159,6 +159,7 @@
   ],
   "clientSlots": {
     "repo": "dsh-client-ui-responsive",
+    "slotsNote": "本表名义是「我方向上游消费的槽」，但 check-contract §4 是**对称差**判据且明确不做任何白名单豁免（scripts/check-contract.mjs:290 与 :309）——凡我方源码里出现字面量 ctx.slots.inject('<name>') 就必须登记，否则判红。android.dock.conversation 是**本仓自有的槽**（名字带 android. 前缀即为此意）：由 dsh-client-ui-responsive/src/client/mobile/conversation-dock.tsx 同时 register（提供）与 renderSlot（消费），而上游槽全集 clientSlots.upstreamUniverse（80 条）里没有任何 android.* 条目。它因此只登记进本表以满足 §4；**不得**写进 declarations —— §4b 会拿 declarations[].file 去上游源码里定位该槽的 kind/scope，上游没有它，那一步只会 skip 或误判成「上游声明源里消失」。kind=single / scope=session 取自 conversation-dock.tsx 自身的注册声明（:22 与 :102），只要与我方 owner 一致即可，不存在「被上游改动」的风险面。",
     "slots": [
       "shell.overlay",
       "sidebar.right.pane.tab",
@@ -166,7 +167,8 @@
       "settings.general.item",
       "conversation.header.leading",
       "sidebar.right.pane.tab.title",
-      "sidebar.right.tab.menu.item"
+      "sidebar.right.tab.menu.item",
+      "android.dock.conversation"
     ],
     "rowId": "ui-layout",
     "enabledRow": "ui-layout",

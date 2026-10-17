@@ -242,6 +242,7 @@
         "package.json": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-session-persistence-jsonl/package.json"
       },
       "patchIds": [
+        "generation-failure-A4",
         "spj-migration-link-F5",
         "publish-exclusive-F7"
       ]
@@ -669,6 +670,59 @@
       "patchIds": [
         "client-index-loader-barrier-G2"
       ]
+    },
+    "dsh-system-prompt-0.2.0-rc.2": {
+      "source": "engine-tgz",
+      "engine": "0.2.0-rc.2",
+      "package": "@deepseek-ai/dsh-system-prompt@0.2.0-rc.2",
+      "provenance": {
+        "tarballFile": "deepseek-ai-dsh-system-prompt-0.2.0-rc.2.tgz",
+        "tarballSha256": "a15ae0a27f767554cd140032dc4b1c6b87d42e7f44319789d740ddcc5059c79d",
+        "inputKind": "published-tarball"
+      },
+      "files": [
+        "lib/index.js",
+        "lib/types/index.d.ts",
+        "package.json"
+      ],
+      "fileSha256": {
+        "lib/index.js": "ff422afac6ba85f89afa985d921aed0b603feb354a05a549c48eae04cf0d2f57",
+        "package.json": "6d83e7a42f04ca54f86f8bc5dbbdd7cabb52968bf51c4d864a2634d70bfd1437",
+        "lib/types/index.d.ts": "954717f76586dc0e824f74bb51378529cf4963aff4582e3d25a7bc3c8142727d"
+      },
+      "targets": {
+        "lib/index.js": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-system-prompt/lib/index.js",
+        "package.json": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-system-prompt/package.json",
+        "lib/types/index.d.ts": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-system-prompt/lib/types/index.d.ts"
+      },
+      "patchIds": [
+        "required-sections-A1"
+      ]
+    },
+    "dsh-plugin-manager-0.2.0-rc.2": {
+      "source": "engine-tgz",
+      "engine": "0.2.0-rc.2",
+      "package": "@deepseek-ai/dsh-plugin-manager@0.2.0-rc.2",
+      "provenance": {
+        "tarballFile": "deepseek-ai-dsh-plugin-manager-0.2.0-rc.2.tgz",
+        "tarballSha256": "e49d37158d16049a5cdf2669ad9597e93145d5bc64df2451483709705b2f618c",
+        "inputKind": "published-tarball"
+      },
+      "files": [
+        "lib/index.js",
+        "package.json"
+      ],
+      "fileSha256": {
+        "lib/index.js": "f46a48b3422927eea5605a70b78502e06ef9ceaa29d7a73f4a7f742361ff51c8",
+        "package.json": "7b3f421da9c0ef2b6288095bf63f51c5fc41a0c30f5c4d908e72505e674ef4fc"
+      },
+      "targets": {
+        "lib/index.js": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-plugin-manager/lib/index.js",
+        "package.json": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-plugin-manager/package.json"
+      },
+      "patchIds": [
+        "reload-restart-report-A3"
+      ]
     }
   },
   "capture": {
@@ -680,6 +734,6 @@
       ]
     },
     "overlaySha256": "118ac224b49fcdef386b699acda44a08042033cc67bed8b1b4e4af88aef475c7",
-    "registrySha256": "97c8c0d0bf42d820c3440cf6af14a9763939580c6b82b2e6c7032e6aecb179b0"
+    "registrySha256": "857552a934b61df76f182f798a4a221b36bb4320bfda7ec0d154d137ede0f2b6"
   }
 }

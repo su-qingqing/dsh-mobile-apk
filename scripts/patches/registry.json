@@ -2,6 +2,33 @@
   "$comment": "vendor 固化插件补丁登记表（apply-patches.mjs 消费；id 必须与 IMPLS 一一对应，启动时交叉校验）。marker 语义见 README。",
   "patches": [
     {
+      "id": "required-sections-A1",
+      "target": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-system-prompt/lib/index.js",
+      "scope": "engine",
+      "additionalTargets": [
+        "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-system-prompt/lib/types/index.d.ts"
+      ],
+      "summary": "给 PromptSection 加 required：声明为必需的 section 在组装瀑布之后缺席即抛（与既有 multiple complete prompt sections 抛错同层），并在公开 .d.ts 上补该字段。",
+      "provenance": "rc.2 真实发布字节（registry.npmjs.org @deepseek-ai/dsh-system-prompt@0.2.0-rc.2，sha256 a15ae0a27f767554…）。上游 packages/core/system-prompt/src/index.ts:596-635 只特判 complete：completeSections >1 抛错，complete section 在瀑布之后被恢复成**唯一** section；sectionDefinitions 里没有任何 required 概念，也没有「声明了却缺席」的核对。消费面判据：苏青青 1017「A1~A6 判据」第一条（判：修，六条里最值钱）。现状无人声明 required ⇒ 对既有配置零行为变化；一旦有 profile 声明 required 而又存在 complete section（后者会成为唯一 section），本补丁让它响亮失败而不是静默少读。",
+      "marker": "dsh-mobile required prompt sections (A1)"
+    },
+    {
+      "id": "reload-restart-report-A3",
+      "target": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-plugin-manager/lib/index.js",
+      "scope": "engine",
+      "summary": "无 HMR 的 reload() 不再静默返回空清单：把调用方已传入的 requiredIds 报成「重启后生效」的待生效清单；change() 仅在 result.changed 为真且 application=restart-required 且尚无 warning 时补一条改动已落盘提示。",
+      "provenance": "rc.2 真实发布字节（@deepseek-ai/dsh-plugin-manager@0.2.0-rc.2，sha256 e49d37158d16049a…）。上游 published lib/index.js:2031-2034 `async reload(requiredIds = []) { if (this.ownerContext.get(\"hmr\") === void 0) return []; … }`；change() 在 :2042 写 `application: … ? \"applied\" : \"restart-required\"`（**rc.2 没有 restartReason 字段**，该字段是 alpha.5 才有的）。reload() 的返回值 5 个调用点（:1421/:1657/:1673/:1802/:1853）全部落进 result.warnings，且全部位于 change() 的 operation 内。⇒ 引擎已知道要重启（客户端 :959/:1124 也已显示 restartRequired），却把「什么待生效」吞成空数组。门闩必须挂在 result.changed 上：空转的 change 走同一分支，不门闩就会报假；而 reload() 被调用时磁盘已写完、没有 before 可比，故第二处落点是必要的而非顺手改。",
+      "marker": "dsh-mobile reload restart report (A3)"
+    },
+    {
+      "id": "generation-failure-A4",
+      "target": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-session-persistence-jsonl/lib/index.js",
+      "scope": "engine",
+      "summary": "generationFailure 的兜底不再把任何未识别异常断言成 stored log is corrupt：能识别的原样放行，不能识别的原样抛出，只有非 Error 抛出物才包一层（且不再声称 corrupt）。",
+      "provenance": "rc.2 真实发布字节（@deepseek-ai/dsh-session-persistence-jsonl@0.2.0-rc.2，sha256 f5650bef896ef852…）。上游 published lib/index.js:2766-2774；兜底行 :2773 `return new SessionPersistenceCorruptionError(`session \"${id}\": stored log is corrupt: …`)`。已证明的具体误报：generation 层 JsonlGenerationTargetConflictError（published :1590 声明、:2060 抛出，经 publishStoredMigration → migration.value.publish() 进入本函数，src/index.ts:700）不在 :2772 的识别集里 ⇒ 一次发布冲突被报成日志损坏，并在 session-query 侧映射成 SESSION_QUERY_CORRUPT_SESSION（observation.ts:339 / corpus.ts:283）、在 subagent 侧映射成 reason:\"corrupt\"（list-children.ts:105）。影响面已实测：本函数三个调用点全在读正文/迁移发布路径（loadStoredMigration:593 / prepareStoredMigration:670 / publishStoredMigration:700），**不在** readGenerationHeader 上 ⇒ listArtifacts()（src/index.ts:1067-1072）的 continue 跳过语义不受影响。不换类型：seam 词表（session-persistence/src/errors.ts）没有「内部失败」这一员，给官方包加一员属上游 API 变更，应提案而非顺手塞进补丁。",
+      "marker": "dsh-mobile generation failure honesty (A4)"
+    },
+    {
       "id": "market-B",
       "target": "dshmarketplace-plugin/lib/index.js",
       "summary": "安装 runner execPath 安全化：TERMUX__PREFIX 兜底烧写快照内 node 绝对路径",
@@ -175,7 +202,9 @@
       "summary": "每个同步 flush 按名称单次索引 Loader 条目，错误回调后失效；nearestPackage 已解析的 manifest 在 resolveMeta 内复用。保留同步构造错误、启动 settle 顺序及运行期/HMR即时语义",
       "provenance": "2026-10-06 MuMu 0.14.5 受控细分：client 构造 flush 193 次 Loader 遍历、38021 行；typert 初始 flush 193 次 qualifies、24181 行。独立CPU样本证实反复遍历热点；C4总体预算仍须无诊断冷启动复测，不以局部耗时改善认绿。",
       "marker": "dsh-mobile registry scan C4",
-      "requiredMarkers": ["dsh-mobile gateway client source G1"]
+      "requiredMarkers": [
+        "dsh-mobile gateway client source G1"
+      ]
     },
     {
       "id": "client-index-loader-barrier-G2",

@@ -53,6 +53,28 @@ try {
   apply()
   check('再施加零改动（幂等）', readFileSync(target, 'utf8') === patched)
 
+  /* ★ 反静默失效（本轮自查补的盲点）：
+   * 本补丁靠 `sectionDefinitions` 里**注册时那个对象**上的 `required` 字段。而 `sectionDefinitions`
+   * 来自 `sectionByName.values()`，后者由 `section()` 填充。所以整条能力成立的前提是
+   * **`section()` 原样保存注册对象、不解构**。rc.2 真产物核实过（lib/index.js:240-243）：
+   *     section(section) {
+   *       if (!Number.isFinite(section.order)) throw new TypeError(...);
+   *       return this.layers.effect(this.ctx, (layer) => layer.sections.insert(section.name, section), ...);
+   *     }
+   * 只读 order/name，其余原样插入 ⇒ required 能活到 sectionDefinitions。
+   * 但**这个前提不在我的补丁里、在上游** —— 上游哪天改成解构（只挑 name/order/text/interpolate/complete），
+   * 我的补丁就变成**静默 no-op**：不报错、不判红、`required: true` 永远不生效。这里把它钉住。
+   * 为什么钉字符串而不是跑行为：驱动真 `section()` 需要 cordis 的 Service/ScopedLayers 全套，
+   * 而这条断言要防的正是「上游形态变了」，形态判据比行为判据更贴合它要防的东西。 */
+  check('注册路径仍原样保存 section 对象（否则 required 会静默失效）',
+    /layer\.sections\.insert\(section\.name, section\)/.test(patched),
+    '未找到 layer.sections.insert(section.name, section) —— section() 可能已改成解构')
+
+  // 反静默失效②：required 必须取自**注册定义**、核对对象必须是**最终 assembly**。
+  // 两者不是同一个对象（assembly 只带 name/text/interpolate），取错一侧就永远不抛。
+  check('required 取自注册定义（sectionDefinitions）', patched.includes('const dshMobileRequiredSections = sectionDefinitions.filter((section) => section.required === true);'))
+  check('核对对象是最终 assembly（finalAssembly.sections）', patched.includes('!finalAssembly.sections.some((section) => section.name === required.name)'))
+
   // ── 行为：抽出注入块原文，用桩驱动 ──
   const start = patched.indexOf('const dshMobileRequiredSections = sectionDefinitions.filter')
   const endMarker = '\n\t\t};'

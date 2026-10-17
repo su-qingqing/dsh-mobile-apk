@@ -30,6 +30,7 @@ import { REQUIRED_SECTIONS_MARKER, planRequiredSections } from './required-secti
 import { RELOAD_RESTART_MARKER, planReloadRestartReport } from './reload-restart-report-A3.mjs'
 import { GENERATION_FAILURE_MARKER, planGenerationFailure } from './generation-failure-A4.mjs'
 import { TRUNCATED_FIRST_FRAME_MARKER, planTruncatedFirstFrame } from './truncated-first-frame-A4.mjs'
+import { INJECT_MISS_MARKER, planInjectMissDiagnosis } from './inject-miss-diagnosis-A7a.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const registry = JSON.parse(readFileSync(join(HERE, 'registry.json'), 'utf8'))
@@ -165,6 +166,14 @@ const IMPLS = {
     scope: 'engine',
     check: (s) => s.includes(RELOAD_RESTART_MARKER),
     apply: (s) => planReloadRestartReport(s),
+  },
+
+  // ── A7(a)：require 没命中模块表时点名「谁在要 + 缺的是谁」（判决 A7a-1）──
+  'inject-miss-diagnosis-A7a': {
+    file: 'usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-client-modules/lib/client.js',
+    scope: 'engine',
+    check: (s) => s.includes(INJECT_MISS_MARKER),
+    apply: (s) => planInjectMissDiagnosis(s),
   },
 
   // ── A4①：残缺首帧不再被说成「空/无 header」（与 A4② 同族第二处误标）──

@@ -26,6 +26,14 @@
       "marker": "dsh-mobile generation failure honesty (A4)"
     },
     {
+      "id": "inject-miss-diagnosis-A7a",
+      "target": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-client-modules/lib/client.js",
+      "scope": "engine",
+      "summary": "makeRequire 的 require-miss 抛错点名「消费者行 id + 缺失包名」；若该行确实在 dsh.client.inject 里声明过它，再加一句「它的 client 插件行不在 boot 图里」。 只在真有人 require 且 seed/loadCache/factories 三层都 miss 时才触发 ⇒ 按构造零假阳性。",
+      "provenance": "rc.2 真实发布字节（@deepseek-ai/dsh-client-modules@0.2.0-rc.2，sha256 2f9f886b115ebcc1…）。上游 published lib/client.js:697-715 的 `makeRequire(ownerId, edges)`，改的是 :705 那一行 throw，逐字：`throw new Error(`client-modules: require(\"${spec}\") missed the module table — …`)`。★ 问题：生产现场只知道「N entries did not activate」，**不告诉你缺的是谁、谁在等它**；而 `ownerId`（消费者行 id）已在作用域里、`spec`（缺的包）也在，两条一写进消息就能当场点名。★ 为什么这条路**零假阳性**（苏青青 1017 判决 A7(a)→A7a-1 的第一条理由）：`inject` 是\"声明顺序\"、不是\"必须能解析到\"；只有**真有人 require 而它不在图上**才会走到这个 throw。所以我先前实测的那条（34 条 inject 边里唯一 1 条不是图行的 @deepseek-ai/dsh-client-ui-primitives，被 ui-jobs/ui-schedule/ui-subagent/agent-team/voice-input 五行注入）**天然不经过这里**。⇒ 也**不需要**把 `arriveGraphRow` 里那个 `inject` 缺行的 `if` 改成出声（那才会误报 5 条假失败）。★ 语法面：这段跑在浏览器（client bundle），构建链有 chrome87 语法下限门禁 ⇒ 刻意不用 `??`/`?.`，改用 `=== void 0` 与 `|| []`，与文件既有风格一致。★ 运行时资产：`app/src/main/assets/patched/` 只有 attachment-local / fs-local / session-persistence-jsonl 三份，**没有 client-modules 的资产** ⇒ 本补丁不需要重生成资产（已核）。★ 消费面：`boot-client.ts:71-84` 会从 `modules.importError(name)` 取错并渲染进 `web boot: N entries did not activate`，所以这条消息**会**出现在那份报告里（importError 由 `recordingImportError` 记录）。消费面判据来源：苏青青 1017「判A7a1与认两条」§一（判走 A7a-1；并要求一条\"真缺行\"回归，断言消息里同时出现消费者行 id 与缺失包名）。",
+      "marker": "dsh-mobile inject-miss diagnosis (A7a)"
+    },
+    {
       "id": "truncated-first-frame-A4",
       "target": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-session-persistence-jsonl/lib/index.js",
       "scope": "engine",

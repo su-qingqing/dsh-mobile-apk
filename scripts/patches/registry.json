@@ -26,6 +26,14 @@
       "marker": "dsh-mobile generation failure honesty (A4)"
     },
     {
+      "id": "negative-verdict-diagnostic-A7b",
+      "target": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-client-modules/lib/index.js",
+      "scope": "engine",
+      "summary": "resolveMeta 的否定判决缓存**只加读数出声**：把\"解析不到包根\"（可能是瞬时失败被永久钉死）与\"读到 manifest 但说不是 client 插件\"（稳定事实）分开记；只对前者在 1/2/4/8… 次命中时 warn。 pkgMeta 的读写、null 语义、返回路径**零改动**；不缩短缓存寿命、不改重试策略。",
+      "provenance": "rc.2 真实发布字节（@deepseek-ai/dsh-client-modules@0.2.0-rc.2，sha256 2f9f886b115ebcc1…）。落点：字段 published lib/index.js:510 `pkgMeta = /* @__PURE__ */ new Map();`；命中 :704 `if (cached !== void 0) return cached;`；两个否定写入 :707（`located === void 0` ⇒ 解析不到包根）与 :715（`decl === void 0 || decl.platform !== \"web\"` ⇒ 读到 manifest 但不是 client 行）。★ 为什么必须把两种否定分开（本补丁唯一的设计取舍，已机器核实）：上游同一个 `null` 装了两件不同的事 —— 上游源码注释逐字 :706 一带「Not a resolvable package root: loader builtins (cordis:include) and subpath entries (…/gateway) land here — permanently not a client row.」；而 :601-602 又逐字「Resolution is entry-local: the same specifier can resolve differently in separate config trees. Negative verdicts remain stable until restart.」⇒ 「解析不到」可能是**一次瞬时失败被永久钉死**（这才是会让人冤枉\"缺行\"的机制），而「读到 manifest、它说不是 client 插件」是**真读了文件**的稳定事实 ⇒ 只对前者出声，后者只计数。★ 出声频率：只在第 1,2,4,8… 次命中时 warn（`hits & (hits-1) === 0`），既拿到\"它到底被查了几次\"的读数，又不每轮刷屏。★ 行为零变化：不缩短缓存寿命、不改重试、不换判据 —— 这是苏青青 1017「判决两件与其余待判项」第 7 条要求的**第一步（先只加诊断）**，重试策略后议。消费面：`this.ctx.logger.warn`；调用处 `:698` 已在用 `this.ctx.logger.error`，故 logger 在场；此处另加了 typeof 守卫。★ 运行时资产：`app/src/main/assets/patched/` 没有 client-modules 的资产 ⇒ 不需要重生成（已核）。",
+      "marker": "dsh-mobile negative verdict diagnostic (A7b)"
+    },
+    {
       "id": "inject-miss-diagnosis-A7a",
       "target": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-client-modules/lib/client.js",
       "scope": "engine",

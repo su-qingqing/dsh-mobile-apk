@@ -289,19 +289,20 @@
         "package.json"
       ],
       "fileSha256": {
-        "lib/client.js": "6fa57df9f12225ea0644ed22bc149eadf7c21e5b0b43a8683c4081567b96374f",
+        "lib/index.js": "03ea21df556256a61289bae762bd1831fff43d035d49b8926d6c0f0b30b0e073",
         "package.json": "4c33ad0d874b77aef4764884cfd13390ed193caef5cd1785657c419793a1578f",
-        "lib/index.js": "03ea21df556256a61289bae762bd1831fff43d035d49b8926d6c0f0b30b0e073"
+        "lib/client.js": "6fa57df9f12225ea0644ed22bc149eadf7c21e5b0b43a8683c4081567b96374f"
       },
       "targets": {
-        "lib/client.js": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-client-modules/lib/client.js",
+        "lib/index.js": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-client-modules/lib/index.js",
         "package.json": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-client-modules/package.json",
-        "lib/index.js": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-client-modules/lib/index.js"
+        "lib/client.js": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-client-modules/lib/client.js"
       },
       "patchIds": [
-        "inject-miss-diagnosis-A7a",
+        "negative-verdict-diagnostic-A7b",
         "combo-probe-P1",
-        "client-registry-scan-C4"
+        "client-registry-scan-C4",
+        "inject-miss-diagnosis-A7a"
       ]
     },
     "dsh-host-frontend-static-SN16": {
@@ -736,6 +737,6 @@
       ]
     },
     "overlaySha256": "118ac224b49fcdef386b699acda44a08042033cc67bed8b1b4e4af88aef475c7",
-    "registrySha256": "db49b176d76263f62135700bf294547a2294114e89ab5cd7db91d31e1b59ceb3"
+    "registrySha256": "8c972e1722544fcf48fc22e44703c2bca66a8259eee2646592066d07d66ed2d6"
   }
 }

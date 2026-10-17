@@ -2286,6 +2286,7 @@ scripts/patches/reload-restart-report-A3.mjs
 scripts/patches/generation-failure-A4.mjs
 scripts/patches/truncated-first-frame-A4.mjs
 scripts/patches/inject-miss-diagnosis-A7a.mjs
+scripts/patches/negative-verdict-diagnostic-A7b.mjs
 glob:scripts/patches/tests/*.test.mjs
 glob:scripts/patches/tests/fixtures/**
 glob:scripts/snapshot-config/*

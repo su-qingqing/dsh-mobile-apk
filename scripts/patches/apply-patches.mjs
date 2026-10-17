@@ -31,6 +31,7 @@ import { RELOAD_RESTART_MARKER, planReloadRestartReport } from './reload-restart
 import { GENERATION_FAILURE_MARKER, planGenerationFailure } from './generation-failure-A4.mjs'
 import { TRUNCATED_FIRST_FRAME_MARKER, planTruncatedFirstFrame } from './truncated-first-frame-A4.mjs'
 import { INJECT_MISS_MARKER, planInjectMissDiagnosis } from './inject-miss-diagnosis-A7a.mjs'
+import { NEGATIVE_VERDICT_MARKER, planNegativeVerdictDiagnostic } from './negative-verdict-diagnostic-A7b.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const registry = JSON.parse(readFileSync(join(HERE, 'registry.json'), 'utf8'))
@@ -166,6 +167,14 @@ const IMPLS = {
     scope: 'engine',
     check: (s) => s.includes(RELOAD_RESTART_MARKER),
     apply: (s) => planReloadRestartReport(s),
+  },
+
+  // ── A7(b) 第一步：否定判决缓存只加读数出声（不改重试策略）──
+  'negative-verdict-diagnostic-A7b': {
+    file: 'usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-client-modules/lib/index.js',
+    scope: 'engine',
+    check: (s) => s.includes(NEGATIVE_VERDICT_MARKER),
+    apply: (s) => planNegativeVerdictDiagnostic(s),
   },
 
   // ── A7(a)：require 没命中模块表时点名「谁在要 + 缺的是谁」（判决 A7a-1）──

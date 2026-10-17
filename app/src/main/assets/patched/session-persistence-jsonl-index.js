@@ -1766,7 +1766,11 @@ async function decodeStreamingMigration(bytes, compression, sourceVersion, forma
 		return stream.parser.finish();
 	}
 	const { frames, tornStart } = scanZstdFrames(bytes);
-	if (frames.length === 0) throw new Error("empty or header-less Zstandard session log");
+	/* dsh-mobile truncated first frame diagnosis (A4): 真空与「首帧残缺（文件被截断）」分开诊断。
+	 * scanZstdFrames 已把截断起点放在 tornStart 里，别再把它说成 header-less。 */
+	if (frames.length === 0) throw new Error(tornStart === void 0
+		? "empty Zstandard session log: the artifact carries no bytes at all"
+		: `truncated Zstandard session log: the first frame is incomplete from byte ${tornStart} (the artifact was cut short)`);
 	const decoder = createZstdFrameDecoder();
 	try {
 		const decoded = decoder.decode(bytes, frames);
@@ -1857,7 +1861,11 @@ function decodeCurrentGeneration(bytes, compression) {
 		return finishCurrentGenerationScan(scanner);
 	}
 	const { frames, tornStart } = scanZstdFrames(bytes);
-	if (frames.length === 0) throw new Error("empty or header-less Zstandard session log");
+	/* dsh-mobile truncated first frame diagnosis (A4): 真空与「首帧残缺（文件被截断）」分开诊断。
+	 * scanZstdFrames 已把截断起点放在 tornStart 里，别再把它说成 header-less。 */
+	if (frames.length === 0) throw new Error(tornStart === void 0
+		? "empty Zstandard session log: the artifact carries no bytes at all"
+		: `truncated Zstandard session log: the first frame is incomplete from byte ${tornStart} (the artifact was cut short)`);
 	if (tornStart !== void 0) throw new Error("current session generation has a torn physical tail");
 	const decoder = createZstdFrameDecoder();
 	try {
@@ -2800,7 +2808,11 @@ var JsonlSessionPersistence = class extends SessionPersistence {
 		});
 		if (error instanceof JsonlGenerationSourceChangedError) return error;
 		if (error instanceof SessionFormatUnsupportedError || error instanceof SessionPersistenceCorruptionError || isErrnoException(error) || error instanceof DOMException && error.name === "AbortError") return error;
-		return new SessionPersistenceCorruptionError(`session "${id}": stored log is corrupt: ${String(error)} (raw log: ${selected.sourcePath})`, { cause: error });
+		/* dsh-mobile generation failure honesty (A4): 兜底不许替未识别的失败下"损坏"的结论。
+		 * 已经证明的误报：JsonlGenerationTargetConflictError（generation 层发布冲突）走的就是这一行。
+		 * 能识别的照旧原样放行；不能识别的原样抛出，让 caller 按"读不了"而不是"坏了"处理。
+		 * seam 词表没有"内部失败"这一员，故只有非 Error 抛出物才需要包一层。 */
+		return error instanceof Error ? error : new SessionPersistenceCorruptionError(`session "${id}": stored log could not be read: ${String(error)} (raw log: ${selected.sourcePath})`);
 	}
 	/**
 	* Read, parse, and validate one stored log as the current logical prefix.
@@ -2968,7 +2980,11 @@ var JsonlSessionPersistence = class extends SessionPersistence {
 		signal?.throwIfAborted();
 		const { frames, tornStart } = scanZstdFrames(buffer);
 		signal?.throwIfAborted();
-		if (frames.length === 0) throw new Error("empty or header-less Zstandard session log");
+		/* dsh-mobile truncated first frame diagnosis (A4): 真空与「首帧残缺（文件被截断）」分开诊断。
+		 * scanZstdFrames 已把截断起点放在 tornStart 里，别再把它说成 header-less。 */
+		if (frames.length === 0) throw new Error(tornStart === void 0
+			? "empty Zstandard session log: the artifact carries no bytes at all"
+			: `truncated Zstandard session log: the first frame is incomplete from byte ${tornStart} (the artifact was cut short)`);
 		const decoder = createZstdFrameDecoder();
 		let yieldDeadline = performance.now() + ZSTD_DECODE_YIELD_INTERVAL_MS;
 		try {

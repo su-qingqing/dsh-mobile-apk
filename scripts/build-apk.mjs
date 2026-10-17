@@ -234,9 +234,19 @@ try {
   run('node', [gate('check-build-parallel-cap.mjs')])
   // Kotlin 单测数量反回归（0.14.1 P0 / 0.14.2-fx-2 G.0 ⑤ 实修）：CI 从不跑 Kotlin 单测时，
   // 「只按退出码判」分不清「全绿」与「一个用例都没跑」；本门禁逐类比对基线 + 断言无缺席 + 结果新鲜。
-  // **本轮去掉 --allow-missing**：它让「结果目录不存在」变成 SKIP⇒绿，正是 G.0 ⑤ 那条结构性脱节
-  // （类被删/漏编译时 exit 仍 0）。真检点已挂到 apk CI 的 testDebugUnitTest **之后**（那里结果必在），
-  // 云端 build-apk.yml 不产测试结果、不跑本门禁 ⇒ 该路径不再有「用 SKIP 冒充通过」的余地。
+  //
+  // ★ 2026-10-17 实修（苏青青 1017 判决二 · 方案 ①）：本链原本在这里**无条件**调用本门禁，
+  // 而本段**之前**没有任何 gradle 调用 —— 于是「缺 Kotlin 单测结果」必然判红，云端产不出 APK。
+  // 更糟的是紧邻的注释当时写着「云端 build-apk.yml 不产测试结果、不跑本门禁」：
+  // **注释与它下面那一行代码自相矛盾**，而注释描述的那个状态才是对的。
+  // 方案 ① ＝ 让注释描述的事实成真：在门禁段之前**先跑一次** `:app:testDebugUnitTest`，
+  // 使结果目录就位。判据不变（本门禁**不传** --allow-missing：结果缺席仍判红），
+  // 只是把「结果从哪来」补上。gradle 启动器与终段 assembleApk 用同一套约定
+  //（build-apk-engine.mjs:85-88：win32 用 gradlew.bat + shell，非 win32 用 ./gradlew）。
+  log('Kotlin 单测：先跑 :app:testDebugUnitTest（让下面的数量门禁有真结果可判）…')
+  run(process.platform === 'win32' ? 'gradlew.bat' : './gradlew',
+    [':app:testDebugUnitTest', '--no-daemon', `-PversionNameSuffix=${SUFFIX}`],
+    { cwd: apkDir, shell: process.platform === 'win32' })
   log('门禁：Kotlin 单测数量反回归（逐类基线只许升 + 无缺席 + 结果新鲜）…')
   run('node', [gate('check-kotlin-test-count.mjs')])
   // 执行地图覆盖与锚点门禁（0.14.2 D7）：输入在 apk 仓，与本地链/发布链同一份实现。

@@ -26,14 +26,10 @@ import { MIMO_PI_FILE, planMimoThinking } from './mimo-thinking-toggle-056.mjs'
 import { CLIENT_SCAN_MARKER, GATEWAY_CLIENT_MARKER, TYPERT_SCAN_MARKER, planClientRegistryScan, planTypertRegistryScan } from './data/registry-scan-c4.mjs'
 import { CLIENT_INDEX_LOADER_BARRIER_MARKER, planClientIndexLoaderBarrier } from './data/client-index-loader-barrier.mjs'
 import { resolveEnginePatchFile } from './resolve-engine-patch-target.mjs'
-import { REQUIRED_SECTIONS_MARKER, REQUIRED_SECTIONS_TYPES_MARKER, planRequiredSectionTypes, planRequiredSections } from './required-sections-A1.mjs'
+import { REQUIRED_SECTIONS_MARKER, planRequiredSections } from './required-sections-A1.mjs'
 import { RELOAD_RESTART_MARKER, planReloadRestartReport } from './reload-restart-report-A3.mjs'
 import { GENERATION_FAILURE_MARKER, planGenerationFailure } from './generation-failure-A4.mjs'
 import { TRUNCATED_FIRST_FRAME_MARKER, planTruncatedFirstFrame } from './truncated-first-frame-A4.mjs'
-
-/* A1 的第二个目标文件（公开类型面）：`required?: boolean` 是给 TS 消费方的契约，
- * 只改运行时会让声明方无法使用该字段。 */
-const A1_TYPES_FILE = 'usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-system-prompt/lib/types/index.d.ts'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const registry = JSON.parse(readFileSync(join(HERE, 'registry.json'), 'utf8'))
@@ -153,16 +149,14 @@ const IMPLS = {
 
   // ── A1：required prompt section —— 声明为必需的 section 在组装瀑布之后缺席即抛 ──
   // 现状无人声明 required ⇒ 对既有配置零行为变化（dormant capability）。见 required-sections-A1.mjs。
+  // ★ 只改运行时一个文件：**不碰** .d.ts。快照按设计删掉 @deepseek-ai/dsh 子树的全部 .d.ts
+  //   （build-snapshot-013.mjs:1134「类型声明不参与执行」），而 check-engine-overlay.mjs:139
+  //   要求每个 additionalTargets 在**出货快照里**带 marker ⇒ 声明 .d.ts 必然判红（CI 实测过一次）。
   'required-sections-A1': {
     file: 'usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-system-prompt/lib/index.js',
-    additionalFiles: [A1_TYPES_FILE],
     scope: 'engine',
-    check: (s) => s.includes(REQUIRED_SECTIONS_MARKER)
-      && loadImpl(A1_TYPES_FILE, CURRENT_STAGE_ROOT).includes(REQUIRED_SECTIONS_TYPES_MARKER),
-    apply: (s) => {
-      IMPL_state[A1_TYPES_FILE] = planRequiredSectionTypes(loadImpl(A1_TYPES_FILE, CURRENT_STAGE_ROOT))
-      return planRequiredSections(s)
-    },
+    check: (s) => s.includes(REQUIRED_SECTIONS_MARKER),
+    apply: (s) => planRequiredSections(s),
   },
 
   // ── A3：无 HMR 的 reload() 不再静默返回空清单 —— 报出「什么待生效」──

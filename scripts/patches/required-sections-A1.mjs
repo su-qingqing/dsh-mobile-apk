@@ -5,18 +5,30 @@
  * 上游只对 `complete` section 做了特殊处理（`multiple complete prompt sections are active`），
  * 一个声明为必需（`required`）的 section 仍可能被后面的瀑布 listener 丢掉，而模型会**静默少读**它。
  *
- * 本补丁做三件事，全部是**加法**：
+ * 本补丁做两件事，全是**加法**：
  *   1. 收集 `sectionDefinitions` 里 `required === true` 的名字；
- *   2. 在 `assemble()` 最终返回的值上逐个核对，缺席即抛（与既有 complete 抛错同层）；
- *   3. 在公开类型 `lib/types/index.d.ts` 的 `PromptSection` 上补 `required?: boolean`。
+ *   2. 在 `assemble()` 最终返回的值上逐个核对，缺席即抛（与既有 complete 抛错同层）。
  *
  * ★ 现状下**没有任何** section 声明 `required`，所以对既有配置**行为零变化**（dormant capability）；
  *   一旦有 profile 声明它、而又同时存在 `complete` section（后者会被恢复成**唯一** section），
  *   本补丁会让它**响亮地失败**而不是静默丢失 —— 这正是「缺席即抛」的语义。
+ *
+ * ★★ 为什么不顺手改公开类型面 `lib/types/index.d.ts`（**这里踩过一次，记下来**）：
+ *   本补丁最初**同时**改了 `.d.ts` 并在登记表里声明为 `additionalTargets`。
+ *   CI（run 38990106675）在最后一道**官方** overlay 门禁上判红：
+ *       [patch-marker] 缺失: required-sections-A1 (…/dsh-system-prompt/lib/types/index.d.ts)
+ *   根因两条，都是机器读数：
+ *     ㈠ `scripts/build-snapshot-013.mjs:1134` 逐字 —— `extensionDelete`: @deepseek-ai/dsh 子树的
+ *        **.d.ts** ——「Node 执行 lib/*.js，**类型声明不参与执行**」⇒ 快照**故意删掉**这些文件；
+ *     ㈡ `scripts/check-engine-overlay.mjs:139` 逐字 ——
+ *        `for (const path of [patch.target, ...(patch.additionalTargets ?? [])])`
+ *        ⇒ 每个声明的目标都**必须**在**已出货的快照里**带 marker。
+ *   ⇒ 声明一个「打补丁时在场、出货前被删」的目标，**marker 永远不可能在场**，官方门禁必红。
+ *   ⇒ 结论：对这个产品，**`.d.ts` 不是契约的一部分**（它不上平板），所以**不补它、也不声明它**。
+ *     要给人读的字段说明写在交付里，不写进一个会被删掉的文件。
  */
 
 export const REQUIRED_SECTIONS_MARKER = 'dsh-mobile required prompt sections (A1)'
-export const REQUIRED_SECTIONS_TYPES_MARKER = 'dsh-mobile required prompt section type (A1)'
 
 const T = '\t'
 
@@ -62,16 +74,6 @@ const RETURN_AFTER = [
   T + T + '});',
 ].join('\n')
 
-const DTS_ANCHOR = '    readonly complete?: boolean;'
-const DTS_INSERT = [
-  '    /**',
-  '     * ' + REQUIRED_SECTIONS_TYPES_MARKER + ': this section must survive the assembly',
-  '     * waterfall. Assembly throws when a required section is missing from the',
-  '     * assembly it returns, including when a complete section replaced it.',
-  '     */',
-  '    readonly required?: boolean;',
-].join('\n')
-
 /** 只在恰好命中一处时才替换，锚点漂移立即判红（不猜、不静默空转）。 */
 function replaceOnce(source, before, after, what) {
   const parts = source.split(before)
@@ -84,9 +86,4 @@ export function planRequiredSections(source) {
   let out = replaceOnce(source, COLLECT_BEFORE, COLLECT_AFTER, 'collect')
   out = replaceOnce(out, RETURN_BEFORE, RETURN_AFTER, 'returns')
   return out
-}
-
-export function planRequiredSectionTypes(source) {
-  if (source.includes(REQUIRED_SECTIONS_TYPES_MARKER)) return source
-  return replaceOnce(source, DTS_ANCHOR, DTS_ANCHOR + '\n' + DTS_INSERT, 'types')
 }

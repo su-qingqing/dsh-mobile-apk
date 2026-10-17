@@ -5,7 +5,7 @@
 //        ② 把**注入进去的那段代码原文**抽出来，用桩驱动它，验行为而不是验字符串：
 //           无 required 时不改变任何东西（dormant）；required 在场则原样返回；
 //           required 缺席则抛，且错误里点名是哪个 section。
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { spawnSync } from 'node:child_process'
@@ -17,7 +17,6 @@ const repoRoot = join(here, '..', '..', '..')
 const PKG = 'usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-system-prompt'
 const ID = 'required-sections-A1'
 const MARKER = 'dsh-mobile required prompt sections (A1)'
-const TYPES_MARKER = 'dsh-mobile required prompt section type (A1)'
 
 const failures = []
 function check(label, ok, detail) {
@@ -30,11 +29,8 @@ try {
   // 夹具是**未施加任何本方补丁**的真产物；package.json 必须一并落位，
   // 否则 lib/index.js 会被 node 当成 CJS 解析（那边是 ESM）。
   const target = join(scratch, PKG, 'lib', 'index.js')
-  const types = join(scratch, PKG, 'lib', 'types', 'index.d.ts')
   mkdirSync(dirname(target), { recursive: true })
-  mkdirSync(dirname(types), { recursive: true })
   writeFileSync(target, readFileSync(versionedFixture('dsh-system-prompt', 'lib', 'index.js'), 'utf8').replace(/\r\n/g, '\n'))
-  writeFileSync(types, readFileSync(versionedFixture('dsh-system-prompt', 'lib', 'types', 'index.d.ts'), 'utf8').replace(/\r\n/g, '\n'))
   writeFileSync(join(scratch, PKG, 'package.json'), readFileSync(versionedFixture('dsh-system-prompt', 'package.json')))
 
   const apply = () => spawnSync(process.execPath,
@@ -48,8 +44,22 @@ try {
     && patched.includes('return dshMobileAssertRequiredSections({'))
   const parsed = spawnSync(process.execPath, ['--check', target], { encoding: 'utf8' })
   check('打过补丁的产物可被 node 解析', parsed.status === 0, (parsed.stderr || '').split('\n')[0])
-  check('公开类型面补上 required', readFileSync(types, 'utf8').includes(TYPES_MARKER)
-    && readFileSync(types, 'utf8').includes('readonly required?: boolean;'))
+
+  /* ★★ 反回归：本补丁**不得**声明 `.d.ts` 目标（CI run 38990106675 实测踩过，已修）。
+   * 两条机器读数相乘 ⇒ 声明它必然让官方 overlay 门禁判红：
+   *   ㈠ `build-snapshot-013.mjs:1134` 的 `extensionDelete` 按设计删掉 @deepseek-ai/dsh 子树的
+   *      全部 .d.ts（「Node 执行 lib/*.js，类型声明不参与执行」）；
+   *   ㈡ `check-engine-overlay.mjs:139` 要求 `[patch.target, ...additionalTargets]` 每个路径
+   *      都在**已出货的快照里**带 marker。
+   * 所以这条断言就是"别再把它加回来"的凭据。 */
+  const entry = JSON.parse(readFileSync(join(repoRoot, 'scripts', 'patches', 'registry.json'), 'utf8'))
+    .patches.find((p) => p.id === ID)
+  check('登记项不声明任何 additionalTargets（.d.ts 会被快照删掉 ⇒ marker 永远不在场）',
+    entry !== undefined && entry.additionalTargets === undefined, JSON.stringify(entry && entry.additionalTargets))
+  const typesDir = join(scratch, PKG, 'lib', 'types')
+  const wroteDts = existsSync(typesDir) && readdirSync(typesDir, { recursive: true }).some((f) => String(f).endsWith('.d.ts'))
+  check('补丁没有写出任何 .d.ts', !wroteDts)
+
   apply()
   check('再施加零改动（幂等）', readFileSync(target, 'utf8') === patched)
 

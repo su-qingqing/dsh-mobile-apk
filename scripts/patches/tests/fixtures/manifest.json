@@ -683,18 +683,15 @@
       },
       "files": [
         "lib/index.js",
-        "lib/types/index.d.ts",
         "package.json"
       ],
       "fileSha256": {
         "lib/index.js": "ff422afac6ba85f89afa985d921aed0b603feb354a05a549c48eae04cf0d2f57",
-        "package.json": "6d83e7a42f04ca54f86f8bc5dbbdd7cabb52968bf51c4d864a2634d70bfd1437",
-        "lib/types/index.d.ts": "954717f76586dc0e824f74bb51378529cf4963aff4582e3d25a7bc3c8142727d"
+        "package.json": "6d83e7a42f04ca54f86f8bc5dbbdd7cabb52968bf51c4d864a2634d70bfd1437"
       },
       "targets": {
         "lib/index.js": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-system-prompt/lib/index.js",
-        "package.json": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-system-prompt/package.json",
-        "lib/types/index.d.ts": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-system-prompt/lib/types/index.d.ts"
+        "package.json": "usr/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-system-prompt/package.json"
       },
       "patchIds": [
         "required-sections-A1"
@@ -735,6 +732,6 @@
       ]
     },
     "overlaySha256": "118ac224b49fcdef386b699acda44a08042033cc67bed8b1b4e4af88aef475c7",
-    "registrySha256": "0729f57be19a4727bf1a347e2b6674b7f8588918df75ffa78f071b95e70c71e8"
+    "registrySha256": "4bbdc004021c3fdd270f7175ed33aee104ec859ed2f363d1f85bc913d96c607d"
   }
 }

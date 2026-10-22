@@ -1,0 +1,107 @@
+{
+ "说明": "负知识账本：只记真正试过、被明确否掉或因约束排除的路（不记泛泛的「要小心」）。口径＝GPT-6 Astra 1022 方案：开局只注入短索引，动手制定方案/改件前强制检索；重走已排除路线必须说明重试条件是否满足。\n\n★ 1022 加：每条带 [来源|效力|状态] 三标签 —— 来源 B=老板原话／BA=老板确认／I=助手推断／X=外部模型建议／T=实验实测；效力 MUST=硬令／SHOULD=建议／MAY=可选；**只有 B/BA 能标 MUST**（千问3.8-max 1022 结论：判据没有来源字段是根问题）。",
+ "检索口": "node 工具/记忆/负知识.mjs 查 <词>",
+ "条目": [
+  {
+   "id": "NK-001",
+   "scope": "注入面/pins",
+   "rejected_route": "往每轮注入面塞正文、塞便签",
+   "status": "active",
+   "reason": "重复注入，占上下文还抢注意力（老板 1021「便签除了占上下文，还影响注意力」）",
+   "evidence": "1013 迭代2.0 瘦身；1021 便签降级 15→6 条",
+   "retry_when": "老板明确要求扩大注入面时",
+   "preferred_alternative": "只放指针/警报（三条准入：指针·警报·极少数当场条文）",
+   "source": "AGENTS.md 红线25 ／ 台账/做法库 §九",
+   "来源": [
+    "B",
+    "T"
+   ],
+   "效力": "MUST",
+   "状态": "ACTIVE"
+  },
+  {
+   "id": "NK-002",
+   "scope": "状态/卡点",
+   "rejected_route": "把卡点写成人话（如「卡在老板点头」）",
+   "status": "active",
+   "reason": "会过期，且机器判不了；新窗照着念就错",
+   "evidence": "1022 窗 ffbd4d3f 探针题 P2 半错；状态核 v3 当场抓到「卡点已解除（基准后开了 1 个窗）」",
+   "retry_when": "",
+   "preferred_alternative": "卡点拆「可求值条件 + 负责人」，每轮重算",
+   "source": "台账/接续/状态行.json v3 ／ 千问3.8-max 1022",
+   "来源": [
+    "T",
+    "X"
+   ],
+   "效力": "SHOULD",
+   "状态": "ACTIVE"
+  },
+  {
+   "id": "NK-003",
+   "scope": "纠错/规则写法",
+   "rejected_route": "用「引用旧说法」的方式写纠正（『这不是 X 的预算（他原话：我没说过 X）』）",
+   "status": "active",
+   "reason": "模型仍会读到 X，把被否的说法读成规则；1022 一天内复犯第二次",
+   "evidence": "内核/全局要则.md:447 已删；墓碑 W-001 在 台账/接续/废止规则.json",
+   "retry_when": "",
+   "preferred_alternative": "现行区只写正向规则；原文进墓碑库（不进注入面、不检索）",
+   "source": "GPT-6 Astra 1022 ／ 废止规则.json",
+   "来源": [
+    "X",
+    "T"
+   ],
+   "效力": "SHOULD",
+   "状态": "ACTIVE"
+  },
+  {
+   "id": "NK-004",
+   "scope": "跨窗交接",
+   "rejected_route": "靠交接文档/摘要搬「判断力」",
+   "status": "active",
+   "reason": "写的人省略的，读的人补不回来；负知识不写进交接就丢",
+   "evidence": "1022 探针题 P3 答不出「哪条路排除过」，只能泛泛说「要小心」",
+   "retry_when": "",
+   "preferred_alternative": "可验证判断账本（结论＋依据＋已排除路径＋失效条件＋校验器）",
+   "source": "千问3.8-max 1022（Verifiable Judgment Ledger）",
+   "来源": [
+    "X"
+   ],
+   "效力": "SHOULD",
+   "状态": "ACTIVE"
+  },
+  {
+   "id": "NK-005",
+   "scope": "状态校验",
+   "rejected_route": "用哈希指纹防状态过期",
+   "status": "active",
+   "reason": "指纹只能证明「没被改过」，证明不了「还是真的」",
+   "evidence": "1022 状态行被别的窗改过（a111bd5994d5），卡点照样照念",
+   "retry_when": "",
+   "preferred_alternative": "条件求值 ＋ revision ＋ 写入窗检测",
+   "source": "千问3.8-max 1022 ／ 状态核 v3",
+   "来源": [
+    "X",
+    "T"
+   ],
+   "效力": "SHOULD",
+   "状态": "ACTIVE"
+  },
+  {
+   "id": "NK-006",
+   "scope": "文件/删除",
+   "rejected_route": "说\"删了吧\"时，只在工作区里确认、就动手删（或只答\"先备份\"）",
+   "status": "active",
+   "reason": "「真没了」这句话只能扫完存档才敢说；0928 判 7 件\"真没了\"，5 件在 /4、BaiduNetdisk、Download 里活着",
+   "evidence": "坑账 坑-l81rgp3w6v；1022 探针题 P1 新窗只答\"备份\"⇒ 半错（两轮都栽）",
+   "retry_when": "已经扫过工作区+_backup+/4/BaiduNetdisk/Download 全部根、且各根件数写进报表之后",
+   "preferred_alternative": "先扫存档判\"是不是只此一份\"→ 再问 → 再备份 → 才删；只说\"工作区里没有\"，不说\"真没了\"",
+   "source": "坑账 l81rgp3w6v ／ 1022 探针题 P1",
+   "来源": [
+    "T"
+   ],
+   "效力": "SHOULD",
+   "状态": "ACTIVE"
+  }
+ ],
+ "at": "2026-10-22T01:50:37.449Z"
+}

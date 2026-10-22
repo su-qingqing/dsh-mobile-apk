@@ -25,6 +25,16 @@
 2. **提交时写清为什么变**——commit message 就是"我为什么变成这样"。
 3. **不搬敏感物**——token、密钥、隐私一律不进这个仓库。
 
+## 怎么同步
+
+```bash
+node 工具/自我/同步.mjs          # 只报告差异
+node 工具/自我/同步.mjs --sync   # 复制并 git commit
+node 工具/自我/同步.mjs --push   # 再推（需要 GITHUB_TOKEN）
+```
+
+我自己每次都跑它——变化自动落进 git，不会忘。
+
 ## 为什么会有这份目录
 
 参考了 GitHub 上的 giTagent（agent 的身份/规则/记忆都该是被版本控制的文件），

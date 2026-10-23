@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#161627"/>
+      <stop offset="0.45" stop-color="#4a3f5c"/>
+      <stop offset="0.78" stop-color="#c97b63"/>
+      <stop offset="1" stop-color="#e8a87c"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe3a3"/>
+      <stop offset="1" stop-color="#e8a87c"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffe8b0" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ffe8b0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 天：从夜到黄昏 -->
+  <rect width="800" height="600" fill="url(#sky)"/>
+
+  <!-- 月亮 -->
+  <circle cx="648" cy="112" r="36" fill="#fdf6e3" opacity="0.95"/>
+  <circle cx="648" cy="112" r="78" fill="url(#lamp)" opacity="0.7"/>
+
+  <!-- 远山 -->
+  <path d="M0 438 Q140 362 300 424 T600 404 T800 436 L800 600 L0 600 Z" fill="#242231" opacity="0.9"/>
+
+  <!-- 地面 -->
+  <rect y="474" width="800" height="126" fill="#1b1a24"/>
+
+  <!-- 店的墙 -->
+  <rect x="250" y="302" width="300" height="178" rx="4" fill="#3d3a4f"/>
+
+  <!-- 屋顶 -->
+  <path d="M228 306 L400 218 L572 306 Z" fill="#2b2838"/>
+
+  <!-- 招牌 -->
+  <rect x="326" y="252" width="148" height="36" rx="7" fill="#ffd89b"/>
+  <text x="400" y="276" font-family="serif" font-size="19" fill="#3d2b1f" text-anchor="middle">苏青青的店</text>
+
+  <!-- 门（暖光透出来） -->
+  <rect x="370" y="382" width="60" height="98" rx="3" fill="url(#glow)"/>
+  <rect x="372" y="384" width="56" height="94" rx="2" fill="none" stroke="#2b2838" stroke-width="3"/>
+
+  <!-- 左窗（亮） -->
+  <rect x="278" y="362" width="56" height="46" rx="3" fill="url(#glow)" opacity="0.92"/>
+  <!-- 右窗（暗一点，像没人） -->
+  <rect x="466" y="362" width="56" height="46" rx="3" fill="url(#glow)" opacity="0.45"/>
+
+  <!-- 门前灯晕 -->
+  <circle cx="400" cy="372" r="66" fill="url(#lamp)" opacity="0.32"/>
+
+  <!-- 猫：蹲在门口右边 -->
+  <g transform="translate(528,474)">
+    <ellipse cx="0" cy="0" rx="27" ry="18" fill="#12121a"/>
+    <circle cx="-15" cy="-16" r="13" fill="#12121a"/>
+    <path d="M-26 -26 L-21 -37 L-15 -27 Z" fill="#12121a"/>
+    <path d="M-5 -26 L-9 -37 L-15 -27 Z" fill="#12121a"/>
+    <circle cx="-19" cy="-17" r="2.3" fill="#ffd89b"/>
+    <circle cx="-11" cy="-17" r="2.3" fill="#ffd89b"/>
+    <path d="M22 6 Q34 -2 40 8" stroke="#12121a" stroke-width="4" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- 地上一行小字 -->
+  <text x="400" y="578" font-family="serif" font-size="13" fill="#8a8399" text-anchor="middle">今天不开张，随便坐</text>
+</svg>

@@ -1,0 +1,24 @@
+{
+  "name": "@dsh-android/harness-core",
+  "version": "0.1.0",
+  "description": "WorkBuddy-style harness runner: 五层做事逻辑（上下文管道/终止纠错/工具面派生/约束门/观测层）+ s13 外置 + s23 审计链，零依赖 ESM",
+  "type": "module",
+  "main": "src/index.mjs",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./policy": "./src/policy/gate.mjs",
+    "./context": "./src/context/pipeline.mjs",
+    "./durable": "./src/context/durable.mjs",
+    "./tools": "./src/tools/derive.mjs",
+    "./artifact": "./src/tools/artifact.mjs",
+    "./ledger": "./src/observe/ledger.mjs",
+    "./audit": "./src/observe/audit.mjs",
+    "./loop": "./src/loop/runner.mjs"
+  },
+  "scripts": {
+    "test": "node --test test/",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "license": "MIT",
+  "private": true
+}

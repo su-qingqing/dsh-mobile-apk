@@ -1,0 +1,118 @@
+{
+  "goal": "在工作区写出 smoke.txt 并读回来确认内容一致",
+  "result": {
+    "status": "completed",
+    "rounds": 3,
+    "answer": "做完了：smoke.txt 已写入并读回，内容一致。",
+    "trace": [
+      {
+        "tool": "write",
+        "status": "SUCCEEDED",
+        "durMs": 2
+      },
+      {
+        "tool": "read",
+        "status": "SUCCEEDED",
+        "durMs": 1
+      }
+    ]
+  },
+  "durable": [
+    {
+      "id": "fmvwhuuqr0",
+      "kind": "fact",
+      "content": "smoke 用的 judge 是假模型（不联网）",
+      "source_pointer": "scripts/smoke.mjs",
+      "last_confirmed_at": 1793456773155,
+      "closed": false
+    },
+    {
+      "id": "pmvwhuuqr1",
+      "kind": "pending",
+      "content": "空窗第 4、5 条（出错自愈/下一窗接得住）还没有真机跑证据",
+      "source_pointer": "scripts/smoke.mjs",
+      "last_confirmed_at": 1793456773155,
+      "closed": false
+    }
+  ],
+  "ledger": {
+    "runId": "smoke",
+    "轮次衔接": "2026-10-31T14:26:13.151Z → 2026-10-31T14:26:13.158Z",
+    "执行": {
+      "总": 2,
+      "成功": 2,
+      "失败": 0,
+      "合计耗时ms": 3
+    },
+    "效果": 1,
+    "有变更": 1
+  },
+  "exec": [
+    {
+      "t": 1793456773154,
+      "args_hash": "aa1960f96f80",
+      "round": 0,
+      "tool": "write",
+      "ok": true,
+      "durMs": 2,
+      "decision": "R-WRITE-ASK"
+    },
+    {
+      "t": 1793456773155,
+      "args_hash": "7874216a7394",
+      "round": 0,
+      "tool": "read",
+      "ok": true,
+      "durMs": 1,
+      "decision": "R-READ-ALLOW"
+    }
+  ],
+  "effect": [
+    {
+      "t": 1793456773154,
+      "target": "smoke.txt",
+      "after_hash": "cea58d4a275c",
+      "note": "smoke 写文件"
+    }
+  ],
+  "auditChain": {
+    "entries": 6,
+    "verify": {
+      "ok": true,
+      "entries": 6
+    }
+  },
+  "toolPhases": {
+    "discover": [],
+    "write": [
+      "write"
+    ]
+  },
+  "空窗5条读数": {
+    "1起得来": {
+      "status": "过",
+      "how": "本机 node 22 直接 node scripts/smoke.mjs",
+      "reading": "loop status=completed"
+    },
+    "2看得见状态": {
+      "status": "过",
+      "how": "onEvent 每轮输出 tokensBefore/tokensAfter + 压缩层采用情况",
+      "reading": "rounds=3"
+    },
+    "3做完看见结果": {
+      "status": "过",
+      "how": "read smoke.txt 读回内容一致才放行 finish",
+      "reading": "文件 .artifacts\\smoke.txt 存在，sha=cea58d4a275c"
+    },
+    "4出错能说清": {
+      "status": "未跑",
+      "how": "需要真机上故意失败一次；本机循环未能提供证据",
+      "reading": null
+    },
+    "5下一窗接得住": {
+      "status": "未跑",
+      "how": "需要重开进程证明能从 ledgers/审计链/旁路恢复；本机未跑",
+      "reading": null
+    }
+  }
+}
